@@ -9,6 +9,8 @@ import { Separator } from '@/components/ui/separator'
 import { formatter } from '@/lib/utils'
 import { CreditCard, DollarSign, Package } from 'lucide-react'
 
+export const dynamic = 'force-dynamic'
+
 export default async function DashboardPage() {
    const totalRevenue = await getTotalRevenue()
    const graphRevenue = await getGraphRevenue()

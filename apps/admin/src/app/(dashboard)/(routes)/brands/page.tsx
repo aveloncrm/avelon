@@ -7,6 +7,8 @@ import Link from 'next/link'
 
 import { BrandColumn, BrandsClient } from './components/table'
 
+export const dynamic = 'force-dynamic'
+
 export default async function BrandsPage() {
    const brands = await serverApi.get('/api/brands')
 

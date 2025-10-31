@@ -43,8 +43,9 @@ export async function POST(req: NextRequest) {
          httpOnly: true,
          path: '/',
          secure: process.env.NODE_ENV !== 'development',
+         sameSite: process.env.NODE_ENV === 'development' ? 'lax' : 'none',
          maxAge: tokenMaxAge,
-      }
+      } as any
 
       const response = new NextResponse(
          JSON.stringify({
@@ -63,7 +64,10 @@ export async function POST(req: NextRequest) {
             name: 'logged-in',
             value: 'true',
             maxAge: tokenMaxAge,
-         }),
+            sameSite: process.env.NODE_ENV === 'development' ? 'lax' : 'none',
+            secure: process.env.NODE_ENV !== 'development',
+            path: '/',
+         } as any),
       ])
 
       return response
