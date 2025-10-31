@@ -2,10 +2,37 @@ import { verifyJWT } from '@/lib/jwt'
 import { getErrorResponse } from '@/lib/utils'
 import { NextRequest, NextResponse } from 'next/server'
 
+// Hardcoded allowed origins for CORS
+const ALLOWED_ORIGINS = [
+   'http://localhost:8888', // Admin panel
+   'http://localhost:3000', // Storefront (if needed)
+]
+
+function handleCors(req: NextRequest, response: NextResponse) {
+   const origin = req.headers.get('origin')
+   
+   // Check if origin is allowed
+   if (origin && ALLOWED_ORIGINS.includes(origin)) {
+      response.headers.set('Access-Control-Allow-Origin', origin)
+      response.headers.set('Access-Control-Allow-Credentials', 'true')
+      response.headers.set('Access-Control-Allow-Methods', 'GET,DELETE,PATCH,POST,PUT,OPTIONS')
+      response.headers.set('Access-Control-Allow-Headers', 'X-CSRF-Token, X-Requested-With, Accept, Accept-Version, Content-Length, Content-MD5, Content-Type, Date, X-Api-Version, Authorization, X-USER-ID')
+   }
+   
+   return response
+}
+
 export async function middleware(req: NextRequest) {
+   // Handle CORS preflight requests
+   if (req.method === 'OPTIONS') {
+      const response = new NextResponse(null, { status: 200 })
+      return handleCors(req, response)
+   }
+
    // Allow auth routes without authentication
    if (req.nextUrl.pathname.startsWith('/api/auth')) {
-      return NextResponse.next()
+      const response = NextResponse.next()
+      return handleCors(req, response)
    }
 
    // Public API routes that don't require authentication
@@ -17,7 +44,8 @@ export async function middleware(req: NextRequest) {
    
    // Check if this is a public API route (GET requests only)
    if (req.method === 'GET' && publicApiRoutes.some(route => req.nextUrl.pathname.startsWith(route))) {
-      return NextResponse.next()
+      const response = NextResponse.next()
+      return handleCors(req, response)
    }
 
    function isTargetingAPI() {
@@ -44,8 +72,10 @@ export async function middleware(req: NextRequest) {
    const token = getToken()
 
    if (!token) {
-      if (isTargetingAPI()) return getErrorResponse(401, 'INVALID TOKEN')
-      return getErrorResponse(401, 'UNAUTHORIZED')
+      const response = isTargetingAPI() 
+         ? getErrorResponse(401, 'INVALID TOKEN')
+         : getErrorResponse(401, 'UNAUTHORIZED')
+      return handleCors(req, response)
    }
 
    const response = NextResponse.next()
@@ -54,13 +84,13 @@ export async function middleware(req: NextRequest) {
       const { sub } = await verifyJWT<{ sub: string }>(token)
       response.headers.set('X-USER-ID', sub)
    } catch {
-      if (isTargetingAPI()) {
-         return getErrorResponse(401, 'UNAUTHORIZED')
-      }
-      return getErrorResponse(401, 'INVALID TOKEN')
+      const errorResponse = isTargetingAPI()
+         ? getErrorResponse(401, 'UNAUTHORIZED')
+         : getErrorResponse(401, 'INVALID TOKEN')
+      return handleCors(req, errorResponse)
    }
 
-   return response
+   return handleCors(req, response)
 }
 
 export const config = {
