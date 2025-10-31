@@ -250,14 +250,11 @@ function VerifyComponents({ isLoading, setIsLoading }) {
             }
          )
 
-         // Store token as cookie on admin domain
-         // if (response.token) {
-         //    const maxAge = 30 * 24 * 60 * 60 // 30 days in seconds
-         //    document.cookie = `token=${response.token}; path=/; max-age=${maxAge}; secure; samesite=lax`
-         //    document.cookie = `logged-in=true; path=/; max-age=${maxAge}; secure; samesite=lax`
-         // }
+         if (response) {
+            window.location.assign(`/`)
+         }
 
-         window.location.assign(`/`)
+
       } catch (error) {
          console.error({ error })
          setIsLoading(false)
