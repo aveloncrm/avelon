@@ -6,7 +6,7 @@ import { NextRequest, NextResponse } from 'next/server'
 const ALLOWED_ORIGINS = [
    'http://localhost:8888', // Admin panel
    'http://localhost:3000', // Storefront (if needed)
-   'https://avelon-sooty.vercel.app'
+   'https://avelon-sooty.vercel.app',
 ]
 
 function handleCors(req: NextRequest, response: NextResponse) {
@@ -26,7 +26,7 @@ function handleCors(req: NextRequest, response: NextResponse) {
 export async function middleware(req: NextRequest) {
    // Handle CORS preflight requests
    if (req.method === 'OPTIONS') {
-      const response = new NextResponse(null, { status: 200 })
+      const response = new NextResponse(null, { status: 201 })
       return handleCors(req, response)
    }
 
