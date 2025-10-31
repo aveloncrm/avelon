@@ -1,0 +1,43 @@
+{
+  "name": "api",
+  "version": "1.0.0",
+  "private": true,
+  "scripts": {
+    "dev": "next dev -p 9999",
+    "build": "next build",
+    "start": "next start -p 9999",
+    "lint": "next lint",
+    "db:generate": "drizzle-kit generate",
+    "db:migrate": "drizzle-kit migrate",
+    "db:push": "drizzle-kit push",
+    "db:studio": "drizzle-kit studio"
+  },
+  "dependencies": {
+    "@hookform/resolvers": "^3.9.0",
+    "@persepolis/mail": "^1.0.9",
+    "@persepolis/regex": "^0.0.3",
+    "@persepolis/rng": "^0.0.1",
+    "@persepolis/slugify": "^0.0.1",
+    "@persepolis/sms": "^0.0.1",
+    "@react-email/components": "^0.5.7",
+    "@react-email/render": "^1.4.0",
+    "drizzle-kit": "^0.31.6",
+    "drizzle-orm": "^0.44.7",
+    "jose": "^5.9.4",
+    "next": "^15.5.3",
+    "next-cloudinary": "^6.14.1",
+    "nodemailer": "^6.9.15",
+    "postgres": "^3.4.7",
+    "react": "18.3.1",
+    "react-dom": "18.3.1",
+    "zod": "^3.23.8"
+  },
+  "devDependencies": {
+    "@types/node": "22.7.5",
+    "@types/react": "18.3.11",
+    "@types/react-dom": "18.3.1",
+    "eslint": "9.12.0",
+    "eslint-config-next": "^15.5.3",
+    "typescript": "5.6.3"
+  }
+}
