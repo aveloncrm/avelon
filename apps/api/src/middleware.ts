@@ -6,7 +6,7 @@ import { NextRequest, NextResponse } from 'next/server'
 const ALLOWED_ORIGINS = [
    'http://localhost:8888', // Admin panel
    'http://localhost:3000', // Storefront (if needed)
-   'https://avelon-sooty.vercel.app',
+   'https://avelon-admin.vercel.app'
 ]
 
 function handleCors(req: NextRequest, response: NextResponse) {
