@@ -49,18 +49,29 @@ NODE_ENV="development"
 
 ### Database Setup
 
+**Local Development:**
+
 ```bash
-# Generate migrations
+# Generate migrations from schema changes
 npm run db:generate
 
-# Push schema to database (development)
+# Push schema to local database (quick development)
 npm run db:push
 
-# Apply migrations (production)
+# OR apply migrations to local database
 npm run db:migrate
 
 # (Optional) Open Drizzle Studio
 npm run db:studio
+```
+
+**Production Deployment:**
+
+See [DEPLOYMENT.md](./DEPLOYMENT.md) for complete production deployment guide.
+
+```bash
+# Run migrations against production database
+DATABASE_URL=<your-neon-url> npm run db:migrate:prod
 ```
 
 ### Development
