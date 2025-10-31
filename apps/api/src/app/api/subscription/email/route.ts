@@ -23,7 +23,7 @@ export async function POST(req: Request) {
          email: user.email,
          isEmailSubscribed: user.isEmailSubscribed,
       })
-   } catch (error: any) {
+   } catch {
       return new NextResponse('Internal error', { status: 500 })
    }
 }
@@ -44,7 +44,7 @@ export async function DELETE(req: Request) {
          email: user.email,
          isEmailSubscribed: user.isEmailSubscribed,
       })
-   } catch (error: any) {
+   } catch {
       return new NextResponse('Internal error', { status: 500 })
    }
 }

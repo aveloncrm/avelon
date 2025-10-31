@@ -1,0 +1,8 @@
+{
+  "extends": "next/core-web-vitals",
+  "rules": {
+    "react/prop-types": 0,
+    "@typescript-eslint/no-explicit-any": 0
+  }
+}
+

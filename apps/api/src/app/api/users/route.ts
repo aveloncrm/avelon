@@ -1,5 +1,5 @@
 import db from '@/lib/db'
-import { users, orders, addresses } from '@/db/schema'
+import { users } from '@/db/schema'
 import { eq, and, or, ilike, count, desc } from 'drizzle-orm'
 import { NextResponse } from 'next/server'
 

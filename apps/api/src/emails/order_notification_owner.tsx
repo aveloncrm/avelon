@@ -1,7 +1,6 @@
 import {
    Body,
    Button,
-   Column,
    Container,
    Head,
    Heading,
@@ -10,7 +9,6 @@ import {
    Img,
    Link,
    Preview,
-   Row,
    Section,
    Tailwind,
    Text,
@@ -81,7 +79,7 @@ export const VercelInviteUserEmail = ({
                   <Hr className="border border-solid border-[#eaeaea] my-[26px] mx-0 w-full" />
                   <Text className="text-[#666666] text-[12px] leading-[24px]">
                      If you were not expecting this invitation, you can ignore
-                     this email. If you are concerned about your account's
+                     this email. If you are concerned about your account&apos;s
                      safety, please reply to this email to get in touch with us.
                   </Text>
                </Container>

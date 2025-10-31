@@ -5,23 +5,24 @@ import { NextResponse } from 'next/server'
 
 export async function GET(
    req: Request,
-   { params }: { params: { addressId: string } }
+   { params }: { params: Promise<{ addressId: string }> }
 ) {
    try {
+      const { addressId } = await params
       const userId = req.headers.get('X-USER-ID')
 
       if (!userId) {
          return new NextResponse('Unauthorized', { status: 401 })
       }
 
-      if (!params.addressId) {
+      if (!addressId) {
          return new NextResponse('addressId is required', { status: 400 })
       }
 
       const address = await db.query.addresses.findFirst({
          where: and(
             eq(addresses.userId, userId),
-            eq(addresses.id, params.addressId)
+            eq(addresses.id, addressId)
          ),
       })
 
