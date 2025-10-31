@@ -239,7 +239,7 @@ function VerifyComponents({ isLoading, setIsLoading }) {
       try {
          setIsLoading(true)
 
-         await api.post(
+         const response = await api.post(
             method === 'phone'
                ? '/api/auth/otp/phone/verify'
                : '/api/auth/otp/email/verify',
@@ -249,6 +249,13 @@ function VerifyComponents({ isLoading, setIsLoading }) {
                OTP,
             }
          )
+
+         // Store token as cookie on admin domain
+         if (response.token) {
+            const maxAge = 30 * 24 * 60 * 60 // 30 days in seconds
+            document.cookie = `token=${response.token}; path=/; max-age=${maxAge}; secure; samesite=lax`
+            document.cookie = `logged-in=true; path=/; max-age=${maxAge}; secure; samesite=lax`
+         }
 
          window.location.assign(`/`)
       } catch (error) {

@@ -7,16 +7,18 @@ import { LogOutIcon } from 'lucide-react'
 export function LogoutButton() {
    async function onLogout() {
       try {
-         await api.get('/api/auth/logout')
+         // Clear cookies on admin domain
+         document.cookie = 'token=; path=/; expires=Thu, 01 Jan 1970 00:00:00 UTC; max-age=0'
+         document.cookie = 'logged-in=; path=/; expires=Thu, 01 Jan 1970 00:00:00 UTC; max-age=0'
 
-         if (typeof window !== 'undefined' && window.localStorage) {
-            document.cookie =
-               'logged-in=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/;'
-         }
+         // Call API logout endpoint (optional, to clean up API-side session)
+         await api.get('/api/auth/logout').catch(() => {})
 
-         window.location.reload()
+         // Redirect to login
+         window.location.href = '/login'
       } catch (error) {
          console.error({ error })
+         window.location.href = '/login'
       }
    }
 
