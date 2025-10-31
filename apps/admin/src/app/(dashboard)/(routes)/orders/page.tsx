@@ -7,7 +7,7 @@ import { SortBy } from './components/options'
 import type { OrderColumn } from './components/table'
 import { OrderTable } from './components/table'
 
-export default async function OrdersPage({ searchParams }) {
+export default async function OrdersPage() {
    const response = await serverApi.get('/api/orders', { adminView: true })
    const orders = response.orders || []
 
@@ -33,29 +33,4 @@ export default async function OrdersPage({ searchParams }) {
          <OrderTable data={formattedOrders} />{' '}
       </div>
    )
-}
-
-function getOrderBy(sort) {
-   let orderBy
-
-   switch (sort) {
-      case 'highest_payable':
-         orderBy = {
-            payable: 'desc',
-         }
-         break
-      case 'lowest_payable':
-         orderBy = {
-            payable: 'asc',
-         }
-         break
-
-      default:
-         orderBy = {
-            createdAt: 'desc',
-         }
-         break
-   }
-
-   return orderBy
 }
