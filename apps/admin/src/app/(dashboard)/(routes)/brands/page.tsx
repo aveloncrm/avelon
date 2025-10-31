@@ -1,16 +1,36 @@
+'use client'
+
 import { Button } from '@/components/ui/button'
 import { Heading } from '@/components/ui/heading'
 import { Separator } from '@/components/ui/separator'
-import serverApi from '@/lib/api-server'
+import api from '@/lib/api'
 import { Plus } from 'lucide-react'
 import Link from 'next/link'
+import { useEffect, useState } from 'react'
 
 import { BrandColumn, BrandsClient } from './components/table'
 
-export const dynamic = 'force-dynamic'
+export default function BrandsPage() {
+   const [brands, setBrands] = useState<any[]>([])
+   const [loading, setLoading] = useState(true)
 
-export default async function BrandsPage() {
-   const brands = await serverApi.get('/api/brands')
+   useEffect(() => {
+      async function fetchBrands() {
+         try {
+            const data = await api.get('/api/brands')
+            setBrands(data)
+         } catch (error) {
+            console.error('Error fetching brands:', error)
+         } finally {
+            setLoading(false)
+         }
+      }
+      fetchBrands()
+   }, [])
+
+   if (loading) {
+      return <div>Loading...</div>
+   }
 
    const formattedBrands: BrandColumn[] = brands.map((brand: any) => ({
       id: brand.id,

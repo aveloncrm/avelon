@@ -1,3 +1,5 @@
+'use client'
+
 import { getGraphRevenue } from '@/actions/get-graph-revenue'
 import { getSalesCount } from '@/actions/get-sales-count'
 import { getStockCount } from '@/actions/get-stock-count'
@@ -8,14 +10,40 @@ import { Heading } from '@/components/ui/heading'
 import { Separator } from '@/components/ui/separator'
 import { formatter } from '@/lib/utils'
 import { CreditCard, DollarSign, Package } from 'lucide-react'
+import { useEffect, useState } from 'react'
 
-export const dynamic = 'force-dynamic'
+export default function DashboardPage() {
+   const [totalRevenue, setTotalRevenue] = useState(0)
+   const [graphRevenue, setGraphRevenue] = useState<any[]>([])
+   const [salesCount, setSalesCount] = useState(0)
+   const [stockCount, setStockCount] = useState(0)
+   const [loading, setLoading] = useState(true)
 
-export default async function DashboardPage() {
-   const totalRevenue = await getTotalRevenue()
-   const graphRevenue = await getGraphRevenue()
-   const salesCount = await getSalesCount()
-   const stockCount = await getStockCount()
+   useEffect(() => {
+      async function fetchData() {
+         try {
+            const [revenue, graph, sales, stock] = await Promise.all([
+               getTotalRevenue(),
+               getGraphRevenue(),
+               getSalesCount(),
+               getStockCount(),
+            ])
+            setTotalRevenue(revenue)
+            setGraphRevenue(graph)
+            setSalesCount(sales)
+            setStockCount(stock)
+         } catch (error) {
+            console.error('Error fetching dashboard data:', error)
+         } finally {
+            setLoading(false)
+         }
+      }
+      fetchData()
+   }, [])
+
+   if (loading) {
+      return <div>Loading...</div>
+   }
 
    return (
       <div className="flex-col">

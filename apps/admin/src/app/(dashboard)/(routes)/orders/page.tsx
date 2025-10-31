@@ -1,15 +1,36 @@
+'use client'
+
 import { Heading } from '@/components/ui/heading'
 import { Separator } from '@/components/ui/separator'
-import serverApi from '@/lib/api-server'
+import api from '@/lib/api'
 import { format } from 'date-fns'
+import { useEffect, useState } from 'react'
 
 import { SortBy } from './components/options'
 import type { OrderColumn } from './components/table'
 import { OrderTable } from './components/table'
 
-export default async function OrdersPage() {
-   const response = await serverApi.get('/api/orders', { adminView: true })
-   const orders = response.orders || []
+export default function OrdersPage() {
+   const [orders, setOrders] = useState<any[]>([])
+   const [loading, setLoading] = useState(true)
+
+   useEffect(() => {
+      async function fetchOrders() {
+         try {
+            const response = await api.get('/api/orders', { adminView: true })
+            setOrders(response.orders || [])
+         } catch (error) {
+            console.error('Error fetching orders:', error)
+         } finally {
+            setLoading(false)
+         }
+      }
+      fetchOrders()
+   }, [])
+
+   if (loading) {
+      return <div>Loading...</div>
+   }
 
    const formattedOrders: OrderColumn[] = orders.map((order: any) => ({
       id: order.id,
@@ -30,7 +51,7 @@ export default async function OrdersPage() {
          <div className="grid grid-cols-4 gap-2">
             <SortBy initialData={'highest_payable'} />
          </div>
-         <OrderTable data={formattedOrders} />{' '}
+         <OrderTable data={formattedOrders} />
       </div>
    )
 }

@@ -1,9 +1,13 @@
 /**
  * Server-side API Client
  * For use in Server Components and Server Actions
+ * 
+ * WARNING: Server components cannot access localStorage.
+ * This will make unauthenticated requests and may fail for protected endpoints.
+ * 
+ * Recommendation: Convert server components to client components that use
+ * the regular api client (which reads from localStorage).
  */
-
-import { cookies } from 'next/headers'
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:9999'
 
@@ -26,20 +30,15 @@ export async function serverApiRequest<T = any>(
     })
     url += `?${searchParams.toString()}`
   }
-
-  // Get cookies for authentication
-  const cookieStore = await cookies()
-  const token = cookieStore.get('token')?.value
   
   const headers: Record<string, string> = {
     'Content-Type': 'application/json',
     ...(fetchOptions?.headers as Record<string, string>),
   }
-  
-  // Add authentication token if available
-  if (token) {
-    headers['Cookie'] = `token=${token}`
-  }
+
+  // Server components cannot access localStorage
+  // No token available - will fail for protected endpoints
+  // Convert components using this to client components instead
 
   const response = await fetch(url, {
     ...fetchOptions,

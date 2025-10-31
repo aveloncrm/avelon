@@ -9,9 +9,6 @@ export function LogoutButton() {
       try {
          // Clear token from localStorage
          tokenStorage.remove()
-         
-         // Clear cookie on admin domain
-         document.cookie = 'token=; path=/; expires=Thu, 01 Jan 1970 00:00:00 UTC; max-age=0'
 
          // Call API logout endpoint (optional, to clean up API-side session)
          await api.get('/api/auth/logout').catch(() => {})
@@ -22,7 +19,6 @@ export function LogoutButton() {
          console.error({ error })
          // Ensure token is cleared even if API call fails
          tokenStorage.remove()
-         document.cookie = 'token=; path=/; expires=Thu, 01 Jan 1970 00:00:00 UTC; max-age=0'
          window.location.href = '/login'
       }
    }

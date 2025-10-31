@@ -1,7 +1,9 @@
+'use client'
+
 import { format } from 'date-fns'
+import { useEffect, useState } from 'react'
 
-import serverApi from '@/lib/api-server'
-
+import api from '@/lib/api'
 import { BannersColumn } from './components/table'
 import { BannersClient } from './components/table'
 import { Plus } from 'lucide-react'
@@ -10,8 +12,27 @@ import { Heading } from '@/components/ui/heading'
 import { Separator } from '@/components/ui/separator'
 import Link from 'next/link'
 
-export default async function BannersPage() {
-   const banners = await serverApi.get('/api/banners')
+export default function BannersPage() {
+   const [banners, setBanners] = useState<any[]>([])
+   const [loading, setLoading] = useState(true)
+
+   useEffect(() => {
+      async function fetchBanners() {
+         try {
+            const data = await api.get('/api/banners')
+            setBanners(data)
+         } catch (error) {
+            console.error('Error fetching banners:', error)
+         } finally {
+            setLoading(false)
+         }
+      }
+      fetchBanners()
+   }, [])
+
+   if (loading) {
+      return <div>Loading...</div>
+   }
 
    const formattedBanners: BannersColumn[] = banners.map((item: any) => ({
       id: item.id,

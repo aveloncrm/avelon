@@ -250,15 +250,10 @@ function VerifyComponents({ isLoading, setIsLoading }) {
             }
          )
 
-         // Store token in localStorage for API calls
+         // Store token in localStorage
          if (response.token) {
             const { tokenStorage } = await import('@/lib/api')
             tokenStorage.set(response.token)
-
-            // Also set cookie on admin domain for middleware route protection
-            // This is same-origin, so no cross-origin cookie issues
-            const maxAge = 30 * 24 * 60 * 60 // 30 days in seconds
-            document.cookie = `token=${response.token}; path=/; max-age=${maxAge}; samesite=lax`
          }
 
          window.location.assign(`/`)

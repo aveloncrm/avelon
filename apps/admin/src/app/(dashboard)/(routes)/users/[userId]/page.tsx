@@ -1,3 +1,5 @@
+'use client'
+
 import {
    Accordion,
    AccordionContent,
@@ -6,22 +8,37 @@ import {
 } from '@/components/ui/accordion'
 import { Card, CardContent } from '@/components/ui/card'
 import { Heading } from '@/components/ui/heading'
-import serverApi from '@/lib/api-server'
+import api from '@/lib/api'
 import { format } from 'date-fns'
+import { useEffect, useState } from 'react'
+import { use } from 'react'
 
 import type { OrderColumn } from '../../orders/components/table'
 import { OrderTable } from '../../orders/components/table'
 import { UserForm } from './components/user-form'
 
-const UserPage = async ({ params }: { params: Promise<{ userId: string }> }) => {
-   const { userId } = await params
-   
-   let user: any = null
-   try {
-      user = await serverApi.get(`/api/users/${userId}`)
-   } catch (error) {
-      console.error('Error fetching user:', error)
-      user = { orders: [] }
+const UserPage = ({ params }: { params: Promise<{ userId: string }> }) => {
+   const { userId } = use(params)
+   const [user, setUser] = useState<any>({ orders: [] })
+   const [loading, setLoading] = useState(true)
+
+   useEffect(() => {
+      async function fetchUser() {
+         try {
+            const data = await api.get(`/api/users/${userId}`)
+            setUser(data)
+         } catch (error) {
+            console.error('Error fetching user:', error)
+            setUser({ orders: [] })
+         } finally {
+            setLoading(false)
+         }
+      }
+      fetchUser()
+   }, [userId])
+
+   if (loading) {
+      return <div>Loading...</div>
    }
 
    function OrdersCard() {

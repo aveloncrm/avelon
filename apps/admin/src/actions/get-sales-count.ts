@@ -1,8 +1,8 @@
-import serverApi from '@/lib/api-server'
+import api from '@/lib/api'
 
 export const getSalesCount = async () => {
    try {
-      const response = await serverApi.get('/api/orders', { adminView: true, isPaid: true })
+      const response = await api.get('/api/orders', { adminView: true, isPaid: true })
       const orders = response.orders || []
       return orders.length
    } catch (error) {

@@ -1,17 +1,34 @@
-import serverApi from '@/lib/api-server'
+'use client'
+
+import api from '@/lib/api'
+import { useEffect, useState } from 'react'
+import { use } from 'react'
 
 import { BrandForm } from './components/brand-form'
 
-const BrandPage = async ({ params }: { params: Promise<{ brandId: string }> }) => {
-   const { brandId } = await params
-   
-   let brand = null
-   if (brandId !== 'new') {
-      try {
-         brand = await serverApi.get(`/api/brands/${brandId}`)
-      } catch (error) {
-         console.error('Error fetching brand:', error)
+const BrandPage = ({ params }: { params: Promise<{ brandId: string }> }) => {
+   const { brandId } = use(params)
+   const [brand, setBrand] = useState<any>(null)
+   const [loading, setLoading] = useState(true)
+
+   useEffect(() => {
+      async function fetchBrand() {
+         try {
+            if (brandId !== 'new') {
+               const data = await api.get(`/api/brands/${brandId}`)
+               setBrand(data)
+            }
+         } catch (error) {
+            console.error('Error fetching brand:', error)
+         } finally {
+            setLoading(false)
+         }
       }
+      fetchBrand()
+   }, [brandId])
+
+   if (loading && brandId !== 'new') {
+      return <div>Loading...</div>
    }
 
    return (

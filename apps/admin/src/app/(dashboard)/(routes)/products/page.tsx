@@ -1,16 +1,38 @@
+'use client'
+
 import { Button } from '@/components/ui/button'
 import { Heading } from '@/components/ui/heading'
 import { Separator } from '@/components/ui/separator'
-import serverApi from '@/lib/api-server'
+import api from '@/lib/api'
 import { formatter } from '@/lib/utils'
 import { Plus } from 'lucide-react'
 import Link from 'next/link'
+import { useEffect, useState } from 'react'
 
 import { ProductsTable } from './components/table'
 import { ProductColumn } from './components/table'
 
-export default async function ProductsPage() {
-   const products = await serverApi.get('/api/products')
+export default function ProductsPage() {
+   const [products, setProducts] = useState<any[]>([])
+   const [loading, setLoading] = useState(true)
+
+   useEffect(() => {
+      async function fetchProducts() {
+         try {
+            const data = await api.get('/api/products')
+            setProducts(data)
+         } catch (error) {
+            console.error('Error fetching products:', error)
+         } finally {
+            setLoading(false)
+         }
+      }
+      fetchProducts()
+   }, [])
+
+   if (loading) {
+      return <div>Loading...</div>
+   }
 
    const formattedProducts: ProductColumn[] = products.map((product: any) => ({
       id: product.id,

@@ -1,12 +1,34 @@
+'use client'
+
 import { Heading } from '@/components/ui/heading'
 import { Separator } from '@/components/ui/separator'
-import serverApi from '@/lib/api-server'
+import api from '@/lib/api'
+import { useEffect, useState } from 'react'
 
 import { UsersTable } from './components/table'
 import { UserColumn } from './components/table'
 
-export default async function UsersPage() {
-   const users = await serverApi.get('/api/users')
+export default function UsersPage() {
+   const [users, setUsers] = useState<any[]>([])
+   const [loading, setLoading] = useState(true)
+
+   useEffect(() => {
+      async function fetchUsers() {
+         try {
+            const data = await api.get('/api/users')
+            setUsers(data)
+         } catch (error) {
+            console.error('Error fetching users:', error)
+         } finally {
+            setLoading(false)
+         }
+      }
+      fetchUsers()
+   }, [])
+
+   if (loading) {
+      return <div>Loading...</div>
+   }
 
    const formattedUsers: UserColumn[] = users.map((user: any) => ({
       id: user.id,

@@ -1,24 +1,42 @@
-import serverApi from '@/lib/api-server'
+'use client'
+
+import api from '@/lib/api'
+import { useEffect, useState } from 'react'
+import { use } from 'react'
 
 import { CategoryForm } from './components/category-form'
 
-const CategoryPage = async ({
+const CategoryPage = ({
    params,
 }: {
    params: Promise<{ categoryId: string; id: string }>
 }) => {
-   const { categoryId } = await params
-   
-   let category = null
-   if (categoryId !== 'new') {
-      try {
-         category = await serverApi.get(`/api/categories/${categoryId}`)
-      } catch (error) {
-         console.error('Error fetching category:', error)
-      }
-   }
+   const { categoryId } = use(params)
+   const [category, setCategory] = useState<any>(null)
+   const [banners, setBanners] = useState<any[]>([])
+   const [loading, setLoading] = useState(true)
 
-   const banners = await serverApi.get('/api/banners')
+   useEffect(() => {
+      async function fetchData() {
+         try {
+            const [categoryData, bannersData] = await Promise.all([
+               categoryId !== 'new' ? api.get(`/api/categories/${categoryId}`).catch(() => null) : Promise.resolve(null),
+               api.get('/api/banners'),
+            ])
+            setCategory(categoryData)
+            setBanners(bannersData)
+         } catch (error) {
+            console.error('Error fetching data:', error)
+         } finally {
+            setLoading(false)
+         }
+      }
+      fetchData()
+   }, [categoryId])
+
+   if (loading) {
+      return <div>Loading...</div>
+   }
 
    return (
       <div className="flex-col">

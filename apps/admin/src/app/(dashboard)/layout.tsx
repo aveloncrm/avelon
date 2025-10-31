@@ -1,4 +1,5 @@
 import { AppSidebar } from '@/components/app-sidebar'
+import { AuthGuard } from '@/components/auth-guard'
 import {
   Breadcrumb,
   BreadcrumbItem,
@@ -16,6 +17,7 @@ export default async function DashboardLayout({
   children: React.ReactNode
 }) {
   return (
+    <AuthGuard>
     <SidebarProvider>
       <AppSidebar />
       <SidebarInset>
@@ -41,5 +43,6 @@ export default async function DashboardLayout({
         </div>
       </SidebarInset>
     </SidebarProvider>
+    </AuthGuard>
   )
 }

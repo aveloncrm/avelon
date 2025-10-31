@@ -1,14 +1,36 @@
+'use client'
+
 import { Button } from '@/components/ui/button'
 import { Heading } from '@/components/ui/heading'
 import { Separator } from '@/components/ui/separator'
-import serverApi from '@/lib/api-server'
+import api from '@/lib/api'
 import { Plus } from 'lucide-react'
 import Link from 'next/link'
+import { useEffect, useState } from 'react'
 
 import { CategoriesClient, CategoryColumn } from './components/table'
 
-export default async function CategoriesPage() {
-   const categories = await serverApi.get('/api/categories')
+export default function CategoriesPage() {
+   const [categories, setCategories] = useState<any[]>([])
+   const [loading, setLoading] = useState(true)
+
+   useEffect(() => {
+      async function fetchCategories() {
+         try {
+            const data = await api.get('/api/categories')
+            setCategories(data)
+         } catch (error) {
+            console.error('Error fetching categories:', error)
+         } finally {
+            setLoading(false)
+         }
+      }
+      fetchCategories()
+   }, [])
+
+   if (loading) {
+      return <div>Loading...</div>
+   }
 
    const formattedCategories: CategoryColumn[] = categories.map((category: any) => ({
       id: category.id,

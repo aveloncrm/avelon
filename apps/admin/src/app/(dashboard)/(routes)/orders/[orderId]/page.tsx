@@ -1,3 +1,5 @@
+'use client'
+
 import {
    Accordion,
    AccordionContent,
@@ -8,23 +10,36 @@ import {
    Card,
    CardContent,
    CardFooter,
-
-
 } from '@/components/ui/card'
 import { Heading } from '@/components/ui/heading'
-import serverApi from '@/lib/api-server'
+import api from '@/lib/api'
 import Link from 'next/link'
+import { useEffect, useState } from 'react'
+import { use } from 'react'
 
 import { OrderForm } from './components/order-form'
 
-const ProductPage = async ({ params }: { params: Promise<{ orderId: string }> }) => {
-   const { orderId } = await params
-   
-   let order = null
-   try {
-      order = await serverApi.get(`/api/orders/${orderId}`)
-   } catch (error) {
-      console.error('Error fetching order:', error)
+const ProductPage = ({ params }: { params: Promise<{ orderId: string }> }) => {
+   const { orderId } = use(params)
+   const [order, setOrder] = useState<any>(null)
+   const [loading, setLoading] = useState(true)
+
+   useEffect(() => {
+      async function fetchOrder() {
+         try {
+            const data = await api.get(`/api/orders/${orderId}`)
+            setOrder(data)
+         } catch (error) {
+            console.error('Error fetching order:', error)
+         } finally {
+            setLoading(false)
+         }
+      }
+      fetchOrder()
+   }, [orderId])
+
+   if (loading) {
+      return <div>Loading...</div>
    }
 
    function UserCard() {

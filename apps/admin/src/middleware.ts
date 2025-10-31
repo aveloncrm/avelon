@@ -3,25 +3,23 @@ import { getErrorResponse } from '@/lib/utils'
 import { NextRequest, NextResponse } from 'next/server'
 
 export async function middleware(req: NextRequest) {
-   if (req.nextUrl.pathname.startsWith('/api/auth')) return NextResponse.next()
+   // Only protect API routes - page routes are protected client-side
+   if (!req.nextUrl.pathname.startsWith('/api')) {
+      return NextResponse.next()
+   }
 
-   function isTargetingAPI() {
-      return req.nextUrl.pathname.startsWith('/api')
+   // Allow auth routes without authentication
+   if (req.nextUrl.pathname.startsWith('/api/auth')) {
+      return NextResponse.next()
    }
 
    function getToken() {
-      let token: string | undefined
-
-      // Check Authorization header first (client-side token-based auth)
-      if (req.headers.get('Authorization')?.startsWith('Bearer ')) {
-         token = req.headers.get('Authorization')?.substring(7)
-      } 
-      // Fallback to cookies for backwards compatibility (server-side)
-      else if (req.cookies.has('token')) {
-         token = req.cookies.get('token')?.value
+      // Only check Authorization header - no cookies
+      const authHeader = req.headers.get('Authorization')
+      if (authHeader?.startsWith('Bearer ')) {
+         return authHeader.substring(7)
       }
-
-      return token
+      return undefined
    }
 
    if (!process.env.JWT_SECRET_KEY) {
@@ -32,9 +30,7 @@ export async function middleware(req: NextRequest) {
    const token = getToken()
 
    if (!token) {
-      if (isTargetingAPI()) return getErrorResponse(401, 'INVALID TOKEN')
-
-      return NextResponse.redirect(new URL('/login', req.url))
+      return getErrorResponse(401, 'INVALID TOKEN')
    }
 
    const response = NextResponse.next()
@@ -43,15 +39,7 @@ export async function middleware(req: NextRequest) {
       const { sub } = await verifyJWT<{ sub: string }>(token)
       response.headers.set('X-USER-ID', sub)
    } catch {
-      if (isTargetingAPI()) {
          return getErrorResponse(401, 'UNAUTHORIZED')
-      }
-
-      const redirect = NextResponse.redirect(new URL(`/login`, req.url))
-      // Clear any remaining cookies (backwards compatibility)
-      redirect.cookies.delete('token')
-      redirect.cookies.delete('logged-in')
-      return redirect
    }
 
    return response
@@ -59,14 +47,6 @@ export async function middleware(req: NextRequest) {
 
 export const config = {
    matcher: [
-      '/',
-      '/products/:path*',
-      '/banners/:path*',
-      '/orders/:path*',
-      '/categories/:path*',
-      '/payments/:path*',
-      '/codes/:path*',
-      '/users/:path*',
-      '/api/:path*',
+      '/api/:path*', // Only protect API routes
    ],
 }
