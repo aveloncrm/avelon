@@ -6,11 +6,12 @@ import { NextRequest, NextResponse } from 'next/server'
 const ALLOWED_ORIGINS = [
    'http://localhost:8888', // Admin panel
    'http://localhost:3000', // Storefront (if needed)
+   'https://avelon-sooty.vercel.app'
 ]
 
 function handleCors(req: NextRequest, response: NextResponse) {
    const origin = req.headers.get('origin')
-   
+
    // Check if origin is allowed
    if (origin && ALLOWED_ORIGINS.includes(origin)) {
       response.headers.set('Access-Control-Allow-Origin', origin)
@@ -18,7 +19,7 @@ function handleCors(req: NextRequest, response: NextResponse) {
       response.headers.set('Access-Control-Allow-Methods', 'GET,DELETE,PATCH,POST,PUT,OPTIONS')
       response.headers.set('Access-Control-Allow-Headers', 'X-CSRF-Token, X-Requested-With, Accept, Accept-Version, Content-Length, Content-MD5, Content-Type, Date, X-Api-Version, Authorization, X-USER-ID')
    }
-   
+
    return response
 }
 
@@ -38,10 +39,10 @@ export async function middleware(req: NextRequest) {
    // Public API routes that don't require authentication
    const publicApiRoutes = [
       '/api/products',
-      '/api/categories', 
+      '/api/categories',
       '/api/brands'
    ]
-   
+
    // Check if this is a public API route (GET requests only)
    if (req.method === 'GET' && publicApiRoutes.some(route => req.nextUrl.pathname.startsWith(route))) {
       const response = NextResponse.next()
@@ -72,7 +73,7 @@ export async function middleware(req: NextRequest) {
    const token = getToken()
 
    if (!token) {
-      const response = isTargetingAPI() 
+      const response = isTargetingAPI()
          ? getErrorResponse(401, 'INVALID TOKEN')
          : getErrorResponse(401, 'UNAUTHORIZED')
       return handleCors(req, response)
