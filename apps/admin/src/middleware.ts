@@ -12,10 +12,13 @@ export async function middleware(req: NextRequest) {
    function getToken() {
       let token: string | undefined
 
-      if (req.cookies.has('token')) {
-         token = req.cookies.get('token')?.value
-      } else if (req.headers.get('Authorization')?.startsWith('Bearer ')) {
+      // Check Authorization header first (client-side token-based auth)
+      if (req.headers.get('Authorization')?.startsWith('Bearer ')) {
          token = req.headers.get('Authorization')?.substring(7)
+      } 
+      // Fallback to cookies for backwards compatibility (server-side)
+      else if (req.cookies.has('token')) {
+         token = req.cookies.get('token')?.value
       }
 
       return token
@@ -45,6 +48,7 @@ export async function middleware(req: NextRequest) {
       }
 
       const redirect = NextResponse.redirect(new URL(`/login`, req.url))
+      // Clear any remaining cookies (backwards compatibility)
       redirect.cookies.delete('token')
       redirect.cookies.delete('logged-in')
       return redirect

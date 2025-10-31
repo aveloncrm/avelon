@@ -9,6 +9,25 @@ interface ApiRequestOptions extends RequestInit {
   params?: Record<string, string | number | boolean>
 }
 
+// Token storage key
+const TOKEN_KEY = 'auth_token'
+
+// Helper functions for token management
+export const tokenStorage = {
+  get: (): string | null => {
+    if (typeof window === 'undefined') return null
+    return localStorage.getItem(TOKEN_KEY)
+  },
+  set: (token: string): void => {
+    if (typeof window === 'undefined') return
+    localStorage.setItem(TOKEN_KEY, token)
+  },
+  remove: (): void => {
+    if (typeof window === 'undefined') return
+    localStorage.removeItem(TOKEN_KEY)
+  },
+}
+
 export async function apiRequest<T = any>(
   endpoint: string,
   options?: ApiRequestOptions
@@ -25,13 +44,23 @@ export async function apiRequest<T = any>(
     url += `?${searchParams.toString()}`
   }
 
+  // Get token from localStorage
+  const token = tokenStorage.get()
+  
+  const headers: HeadersInit = {
+    'Content-Type': 'application/json',
+    ...fetchOptions?.headers,
+  }
+
+  // Add Authorization header if token exists
+  if (token) {
+    headers['Authorization'] = `Bearer ${token}`
+  }
+
   const response = await fetch(url, {
     ...fetchOptions,
-    credentials: 'include', // Important for cookies
-    headers: {
-      'Content-Type': 'application/json',
-      ...fetchOptions?.headers,
-    },
+    credentials: 'include', // Keep for CORS
+    headers,
   })
 
   // Handle non-OK responses

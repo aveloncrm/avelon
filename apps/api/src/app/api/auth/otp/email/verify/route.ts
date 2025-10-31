@@ -36,17 +36,6 @@ export async function POST(req: NextRequest) {
          { exp: `${expiryMinutes}m` }
       )
 
-      const tokenMaxAge = expiryMinutes * 60
-      const cookieOptions = {
-         name: 'token',
-         value: token,
-         httpOnly: true,
-         path: '/',
-         secure: process.env.NODE_ENV !== 'development',
-         sameSite: process.env.NODE_ENV === 'development' ? 'lax' : 'none',
-         maxAge: tokenMaxAge,
-      } as any
-
       const response = new NextResponse(
          JSON.stringify({
             status: 'success',
@@ -57,18 +46,6 @@ export async function POST(req: NextRequest) {
             headers: { 'Content-Type': 'application/json' },
          }
       )
-
-      await Promise.all([
-         response.cookies.set(cookieOptions),
-         response.cookies.set({
-            name: 'logged-in',
-            value: 'true',
-            maxAge: tokenMaxAge,
-            sameSite: process.env.NODE_ENV === 'development' ? 'lax' : 'none',
-            secure: process.env.NODE_ENV !== 'development',
-            path: '/',
-         } as any),
-      ])
 
       return response
    } catch (error: any) {

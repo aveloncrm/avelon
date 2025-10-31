@@ -1,15 +1,17 @@
 'use client'
 
 import { Button } from '@/components/ui/button'
-import api from '@/lib/api'
+import api, { tokenStorage } from '@/lib/api'
 import { LogOutIcon } from 'lucide-react'
 
 export function LogoutButton() {
    async function onLogout() {
       try {
-         // Clear cookies on admin domain
+         // Clear token from localStorage
+         tokenStorage.remove()
+         
+         // Clear cookie on admin domain
          document.cookie = 'token=; path=/; expires=Thu, 01 Jan 1970 00:00:00 UTC; max-age=0'
-         document.cookie = 'logged-in=; path=/; expires=Thu, 01 Jan 1970 00:00:00 UTC; max-age=0'
 
          // Call API logout endpoint (optional, to clean up API-side session)
          await api.get('/api/auth/logout').catch(() => {})
@@ -18,6 +20,9 @@ export function LogoutButton() {
          window.location.href = '/login'
       } catch (error) {
          console.error({ error })
+         // Ensure token is cleared even if API call fails
+         tokenStorage.remove()
+         document.cookie = 'token=; path=/; expires=Thu, 01 Jan 1970 00:00:00 UTC; max-age=0'
          window.location.href = '/login'
       }
    }
