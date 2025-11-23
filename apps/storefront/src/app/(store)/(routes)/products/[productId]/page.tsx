@@ -2,19 +2,18 @@ import Carousel from '@/components/native/Carousel'
 import serverApi from '@/lib/api-server'
 import { isVariableValid } from '@/lib/utils'
 import { ChevronRightIcon } from 'lucide-react'
-import type { Metadata, ResolvingMetadata } from 'next'
+import type { Metadata } from 'next'
 import Link from 'next/link'
 
 import { DataSection } from './components/data'
 
 type Props = {
-   params: { productId: string }
-   searchParams: { [key: string]: string | string[] | undefined }
+   params: Promise<{ productId: string }>
+   searchParams: Promise<{ [key: string]: string | string[] | undefined }>
 }
 
 export async function generateMetadata(
-   { params, searchParams }: Props,
-   parent: ResolvingMetadata
+   { params }: Props
 ): Promise<Metadata> {
    const resolvedParams = await params
    const product = await serverApi.get(`/api/products/${resolvedParams.productId}`)
@@ -32,7 +31,7 @@ export async function generateMetadata(
 export default async function Product({
    params,
 }: {
-   params: { productId: string }
+   params: Promise<{ productId: string }>
 }) {
    const resolvedParams = await params
    const product = await serverApi.get(`/api/products/${resolvedParams.productId}`)

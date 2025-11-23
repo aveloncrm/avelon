@@ -6,8 +6,9 @@ import React, { createContext, useContext, useEffect, useState } from 'react'
 const CartContext = createContext({
    cart: null,
    loading: true,
-   refreshCart: () => {},
-   dispatchCart: (object) => {},
+   refreshCart: () => { },
+   // eslint-disable-next-line @typescript-eslint/no-unused-vars
+   dispatchCart: (_cart: any) => { },
 })
 
 export const useCartContext = () => {
@@ -15,7 +16,7 @@ export const useCartContext = () => {
 }
 
 export const CartContextProvider = ({ children }) => {
-   const { refreshUser, user } = useUserContext()
+   const { user } = useUserContext()
 
    const [cart, setCart] = useState(null)
    const [loading, setLoading] = useState(true)
@@ -42,7 +43,7 @@ export const CartContextProvider = ({ children }) => {
          setCart(user?.cart)
          writeLocalCart(user?.cart)
       }
-      if (!isVariableValid(getLocalCart())) writeLocalCart({ items: [] })
+      if (!isVariableValid(getLocalCart())) writeLocalCart([])
       if (!isVariableValid(user)) setCart(getLocalCart())
 
       setLoading(false)

@@ -16,7 +16,7 @@ export function getLocalCart(): Cart | null {
       try {
          const cartData = window.localStorage.getItem('Cart')
          return cartData ? JSON.parse(cartData) : null
-      } catch (error) {
+      } catch {
          writeLocalCart([])
          return { items: [] }
       }

@@ -13,7 +13,7 @@ import {
 
 export default async function Products({ searchParams }) {
    const resolvedSearchParams = await searchParams
-   const { sort, isAvailable, brand, category, page = 1 } = resolvedSearchParams ?? null
+   const { sort, isAvailable, brand, category } = resolvedSearchParams ?? null
 
    const brands = await serverApi.get('/api/brands')
    const categories = await serverApi.get('/api/categories')
@@ -44,36 +44,4 @@ export default async function Products({ searchParams }) {
    )
 }
 
-function getOrderBy(sort) {
-   let orderBy
 
-   switch (sort) {
-      case 'featured':
-         orderBy = {
-            orders: {
-               _count: 'desc',
-            },
-         }
-         break
-      case 'most_expensive':
-         orderBy = {
-            price: 'desc',
-         }
-         break
-      case 'least_expensive':
-         orderBy = {
-            price: 'asc',
-         }
-         break
-
-      default:
-         orderBy = {
-            orders: {
-               _count: 'desc',
-            },
-         }
-         break
-   }
-
-   return orderBy
-}

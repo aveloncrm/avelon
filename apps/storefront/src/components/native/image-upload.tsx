@@ -25,7 +25,7 @@ const ImageUpload: React.FC<ImageUploadProps> = ({
       setIsMounted(true)
    }, [])
 
-   const onSuccess = (result: any, { widget }: any) => {
+   const onSuccess = (result: any) => {
       if (result?.info?.secure_url) {
          onChange(result.info.secure_url)
       }
@@ -63,7 +63,7 @@ const ImageUpload: React.FC<ImageUploadProps> = ({
                </div>
             ))}
          </div>
-         <CldUploadWidget 
+         <CldUploadWidget
             uploadPreset={process.env.NEXT_PUBLIC_CLOUDINARY_UPLOAD_PRESET || "ml_default"}
             onSuccess={onSuccess}
             onError={(error) => {

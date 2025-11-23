@@ -2,16 +2,16 @@
 
 import { CartGrid } from '@/app/(store)/(routes)/cart/components/grid'
 import { useAuthenticated } from '@/hooks/useAuthentication'
-import { isVariableValid, validateBoolean } from '@/lib/utils'
+import { isVariableValid } from '@/lib/utils'
 import { useUserContext } from '@/state/User'
 import { useRouter } from 'next/navigation'
-import { useEffect, useState } from 'react'
+import { useEffect } from 'react'
 
-export default function User({}) {
+export default function User() {
    const { authenticated } = useAuthenticated()
    const { user, loading } = useUserContext()
 
-   const [items, setItems] = useState(null)
+
    const router = useRouter()
 
    useEffect(() => {
@@ -25,9 +25,9 @@ export default function User({}) {
                cache: 'no-store',
             })
 
-            const json = await response.json()
+            await response.json()
 
-            setItems(json?.wishlist?.items)
+            // Wishlist items are fetched but not used currently
          } catch (error) {
             console.error({ error })
          }

@@ -3,18 +3,16 @@
 import {
    Card,
    CardContent,
-   CardFooter,
-   CardHeader,
-   CardTitle,
 } from '@/components/ui/card'
 import { Loader } from '@/components/ui/loader'
 import { useAuthenticated } from '@/hooks/useAuthentication'
-import { usePathname } from 'next/navigation'
+import { useParams, usePathname } from 'next/navigation'
 import { useEffect, useState } from 'react'
 
 import { UserCombobox } from '../../components/switcher'
 
-const ProductPage = ({ params }: { params: { orderId: string } }) => {
+const ProductPage = () => {
+   const params = useParams()
    const { authenticated } = useAuthenticated()
    const [order, setOrder] = useState(null)
    const pathname = usePathname()

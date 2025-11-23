@@ -6,10 +6,10 @@ export async function middleware(req: NextRequest) {
    // Allow public API routes without authentication
    const publicApiRoutes = [
       '/api/products',
-      '/api/categories', 
+      '/api/categories',
       '/api/brands'
    ]
-   
+
    // Allow public page routes without authentication
    const publicPageRoutes = [
       '/',
@@ -18,16 +18,16 @@ export async function middleware(req: NextRequest) {
       '/privacy',
       '/terms'
    ]
-   
+
    if (req.nextUrl.pathname.startsWith('/api/auth')) {
       return NextResponse.next()
    }
-   
+
    // Check if this is a public API route
    if (publicApiRoutes.some(route => req.nextUrl.pathname.startsWith(route))) {
       return NextResponse.next()
    }
-   
+
    // Check if this is a public page route (exact match or with trailing slash)
    if (publicPageRoutes.some(route => {
       const pathname = req.nextUrl.pathname
@@ -65,7 +65,7 @@ export async function middleware(req: NextRequest) {
    try {
       const { sub } = await verifyJWT<{ sub: string }>(token)
       response.headers.set('X-USER-ID', sub)
-   } catch (error) {
+   } catch {
       if (isTargetingAPI()) {
          return getErrorResponse(401, 'UNAUTHORIZED')
       }

@@ -10,14 +10,14 @@ import Link from 'next/link'
 
 export function Receipt() {
    const { authenticated } = useAuthenticated()
-   const { loading, cart, refreshCart, dispatchCart } = useCartContext()
+   const { loading, cart } = useCartContext()
 
    function calculatePayableCost() {
       let totalAmount = 0,
          discountAmount = 0
 
       if (isVariableValid(cart?.items)) {
-         for (const item of cart?.items) {
+         for (const item of cart?.items ?? []) {
             totalAmount += item?.count * item?.product?.price
             discountAmount += item?.count * item?.product?.discount
          }

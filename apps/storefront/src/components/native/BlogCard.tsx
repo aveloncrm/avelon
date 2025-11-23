@@ -2,10 +2,8 @@ import { ImageSkeleton } from '@/components/native/icons'
 import {
    Card,
    CardContent,
-   CardDescription,
    CardFooter,
    CardHeader,
-   CardTitle,
 } from '@/components/ui/card'
 import Image from 'next/image'
 import Link from 'next/link'
@@ -31,7 +29,7 @@ export function BlogPostSkeletonGrid() {
 }
 
 export function BlogPostCard({ post }) {
-   const { title, description, image, slug, createdAt, author } = post
+   const { title, image, slug, author } = post
 
    return (
       <Link href={`/blog/${slug}`}>

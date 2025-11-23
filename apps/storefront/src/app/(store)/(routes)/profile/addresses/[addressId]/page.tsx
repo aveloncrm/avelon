@@ -5,11 +5,12 @@ import { AddressForm } from './components/address-form'
 export default async function AddressPage({
    params,
 }: {
-   params: { addressId: string }
+   params: Promise<{ addressId: string }>
 }) {
+   const { addressId } = await params
    let address = null
    try {
-      address = await serverApi.get(`/api/addresses/${params.addressId}`)
+      address = await serverApi.get(`/api/addresses/${addressId}`)
    } catch (error) {
       console.error('Error fetching address:', error)
    }

@@ -29,7 +29,7 @@ const defaultProps = {
     leftImageAlt: '',
     leftImageCss: {},
     leftImageLabel: null,
-    onSliderPositionChange: () => {},
+    onSliderPositionChange: () => { },
     rightImageAlt: '',
     rightImageCss: {},
     rightImageLabel: null,
@@ -81,7 +81,7 @@ const CompareImage: React.FC<IProps> = (props) => {
     // make the component responsive
     useEffect(() => {
         const containerElement = containerRef.current
-        const resizeObserver = new ResizeObserver(([entry, ..._]) => {
+        const resizeObserver = new ResizeObserver(([entry]) => {
             const currentContainerWidth =
                 entry.target.getBoundingClientRect().width
             setContainerWidth(currentContainerWidth)
@@ -95,7 +95,7 @@ const CompareImage: React.FC<IProps> = (props) => {
         // consider the case where loading image is completed immediately
         // due to the cache etc.
         const alreadyDone = leftImageRef.current.complete
-        alreadyDone && setLeftImgLoaded(true)
+        void (alreadyDone && setLeftImgLoaded(true))
 
         return () => {
             // when the left image source is changed
@@ -107,7 +107,7 @@ const CompareImage: React.FC<IProps> = (props) => {
         // consider the case where loading image is completed immediately
         // due to the cache etc.
         const alreadyDone = rightImageRef.current.complete
-        alreadyDone && setRightImgLoaded(true)
+        void (alreadyDone && setRightImgLoaded(true))
 
         return () => {
             // when the right image source is changed
@@ -151,15 +151,15 @@ const CompareImage: React.FC<IProps> = (props) => {
             if (pos < minPos) pos = minPos
             if (pos > maxPos) pos = maxPos
 
-            horizontal
+            void (horizontal
                 ? setSliderPosition(pos / containerWidth)
-                : setSliderPosition(pos / containerHeight)
+                : setSliderPosition(pos / containerHeight))
 
             // If there's a callback function, invoke it everytime the slider changes
             if (onSliderPositionChange) {
-                horizontal
+                void (horizontal
                     ? onSliderPositionChange(pos / containerWidth)
-                    : onSliderPositionChange(pos / containerHeight)
+                    : onSliderPositionChange(pos / containerHeight))
             }
         }
 
@@ -213,13 +213,13 @@ const CompareImage: React.FC<IProps> = (props) => {
             const idealWidthHeightRatio =
                 aspectRatio === 'taller'
                     ? Math.max(
-                          leftImageWidthHeightRatio,
-                          rightImageWidthHeightRatio
-                      )
+                        leftImageWidthHeightRatio,
+                        rightImageWidthHeightRatio
+                    )
                     : Math.min(
-                          leftImageWidthHeightRatio,
-                          rightImageWidthHeightRatio
-                      )
+                        leftImageWidthHeightRatio,
+                        rightImageWidthHeightRatio
+                    )
 
             const idealContainerHeight = containerWidth * idealWidthHeightRatio
 
@@ -259,9 +259,8 @@ const CompareImage: React.FC<IProps> = (props) => {
         rightImage: {
             clip: horizontal
                 ? `rect(auto, auto, auto, ${containerWidth * sliderPosition}px)`
-                : `rect(${
-                      containerHeight * sliderPosition
-                  }px, auto, auto, auto)`,
+                : `rect(${containerHeight * sliderPosition
+                }px, auto, auto, auto)`,
             display: 'block',
             height: '100%',
             objectFit: 'cover',
@@ -272,9 +271,8 @@ const CompareImage: React.FC<IProps> = (props) => {
         leftImage: {
             clip: horizontal
                 ? `rect(auto, ${containerWidth * sliderPosition}px, auto, auto)`
-                : `rect(auto, auto, ${
-                      containerHeight * sliderPosition
-                  }px, auto)`,
+                : `rect(auto, auto, ${containerHeight * sliderPosition
+                }px, auto)`,
             display: 'block',
             height: '100%',
             objectFit: 'cover',
@@ -373,9 +371,8 @@ const CompareImage: React.FC<IProps> = (props) => {
         leftLabelContainer: {
             clip: horizontal
                 ? `rect(auto, ${containerWidth * sliderPosition}px, auto, auto)`
-                : `rect(auto, auto, ${
-                      containerHeight * sliderPosition
-                  }px, auto)`,
+                : `rect(auto, auto, ${containerHeight * sliderPosition
+                }px, auto)`,
             height: '100%',
             position: 'absolute',
             width: '100%',
@@ -383,9 +380,8 @@ const CompareImage: React.FC<IProps> = (props) => {
         rightLabelContainer: {
             clip: horizontal
                 ? `rect(auto, auto, auto, ${containerWidth * sliderPosition}px)`
-                : `rect(${
-                      containerHeight * sliderPosition
-                  }px, auto, auto, auto)`,
+                : `rect(${containerHeight * sliderPosition
+                }px, auto, auto, auto)`,
             height: '100%',
             position: 'absolute',
             width: '100%',
@@ -407,6 +403,7 @@ const CompareImage: React.FC<IProps> = (props) => {
                 ref={containerRef}
                 data-testid="container"
             >
+                {/* eslint-disable-next-line @next/next/no-img-element */}
                 <img
                     onLoad={() => setRightImgLoaded(true)}
                     alt={rightImageAlt}
@@ -415,6 +412,7 @@ const CompareImage: React.FC<IProps> = (props) => {
                     src={rightImage}
                     style={styles.rightImage}
                 />
+                {/* eslint-disable-next-line @next/next/no-img-element */}
                 <img
                     onLoad={() => setLeftImgLoaded(true)}
                     alt={leftImageAlt}
@@ -451,7 +449,7 @@ const CompareImage: React.FC<IProps> = (props) => {
     )
 }
 
-// @ts-ignore
+// @ts-expect-error - defaultProps is deprecated but still used for backwards compatibility
 CompareImage.defaultProps = defaultProps
 
 export default CompareImage

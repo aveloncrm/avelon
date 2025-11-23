@@ -2,8 +2,8 @@ export function omitUser<User, Key extends keyof User>(
    user: User,
    ...keys: Key[]
 ): Omit<User, Key> {
-   for (let key of keys) {
-      delete user['password']
+   for (const _key of keys) {
+      delete user[_key]
    }
    return user
 }
