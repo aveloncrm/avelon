@@ -2,7 +2,7 @@
 
 import { Button } from '@/components/ui/button'
 import { ScrollArea } from '@/components/ui/scroll-area'
-import { Sheet, SheetContent, SheetTrigger } from '@/components/ui/sheet'
+import { Sheet, SheetContent, SheetTitle, SheetTrigger } from '@/components/ui/sheet'
 import { docsConfig } from '@/config/docs'
 import Config from '@/config/site'
 import { useCategories } from '@/hooks/useCategories'
@@ -30,6 +30,7 @@ export function MobileNav() {
             </Button>
          </SheetTrigger>
          <SheetContent side="left" className="pr-0">
+            <SheetTitle className="sr-only">Navigation Menu</SheetTitle>
             <MobileLink
                href="/"
                className="flex items-center"

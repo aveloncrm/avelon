@@ -88,6 +88,7 @@ export async function POST(req: Request) {
          })
       }
 
+      console.log('Created product:', product)
       return NextResponse.json(product)
    } catch (error) {
       console.error('[PRODUCTS_POST]', error)
@@ -115,6 +116,7 @@ export async function GET() {
          categories: product.categories.map(pc => pc.category),
       }))
 
+      console.log('Fetched products:', productsWithCategories)
       return NextResponse.json(productsWithCategories)
    } catch (error) {
       console.error('[PRODUCTS_GET]', error)

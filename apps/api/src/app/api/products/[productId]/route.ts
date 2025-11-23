@@ -1,5 +1,5 @@
 import db from '@/lib/db'
-import { products } from '@/db/schema'
+import { products, productCategories, brands, categories } from '@/db/schema'
 import { eq } from 'drizzle-orm'
 import { NextResponse } from 'next/server'
 
@@ -86,23 +86,74 @@ export async function PATCH(
 
       const body = await req.json()
 
-      const { title, description, images, price, discount, stock, isFeatured, isAvailable } = body
+      const { title, description, images, price, discount, stock, categoryId, brandId, isFeatured, isAvailable } = body
+
+      // Handle brand validation if provided
+      if (brandId) {
+         const [brand] = await db
+            .select()
+            .from(brands)
+            .where(eq(brands.id, brandId))
+            .limit(1)
+
+         if (!brand) {
+            return new NextResponse('Brand not found', { status: 404 })
+         }
+      }
+
+      // Handle category validation if provided
+      if (categoryId && categoryId !== '---') {
+         const [category] = await db
+            .select()
+            .from(categories)
+            .where(eq(categories.id, categoryId))
+            .limit(1)
+
+         if (!category) {
+            return new NextResponse('Category not found', { status: 404 })
+         }
+      }
+
+      // Update the product
+      const updateData: any = {
+         title,
+         description,
+         images,
+         price,
+         discount,
+         stock,
+         isFeatured,
+         isAvailable,
+      }
+
+      // Only update brandId if provided
+      if (brandId) {
+         updateData.brandId = brandId
+      }
 
       const [product] = await db
          .update(products)
-         .set({
-            title,
-            description,
-            images,
-            price,
-            discount,
-            stock,
-            isFeatured,
-            isAvailable,
-         })
+         .set(updateData)
          .where(eq(products.id, productId))
          .returning()
 
+      // Update category relationship if provided
+      if (categoryId) {
+         // First, delete existing category relationships
+         await db
+            .delete(productCategories)
+            .where(eq(productCategories.productId, productId))
+
+         // Then add new category relationship if it's not the default '---'
+         if (categoryId !== '---') {
+            await db.insert(productCategories).values({
+               productId: product.id,
+               categoryId,
+            })
+         }
+      }
+
+      console.log('Updated product:', product)
       return NextResponse.json(product)
    } catch (error) {
       console.error('[PRODUCT_PATCH]', error)

@@ -201,7 +201,7 @@ export async function POST(req: Request) {
       await db.insert(notifications).values(
          ownersList.map((owner) => ({
             userId: owner.id,
-            content: `Order #${order.number} was created was created with a value of $${payable}.`,
+            content: `Order #${order.number} was created with a value of $${payable}.`,
          }))
       )
 

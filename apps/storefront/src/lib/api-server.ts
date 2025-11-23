@@ -16,7 +16,7 @@ export async function serverApiRequest<T = any>(
   options?: ApiRequestOptions
 ): Promise<T> {
   const { params, ...fetchOptions } = options || {}
-  
+
   // Build URL with query parameters if provided
   let url = `${API_URL}${endpoint}`
   if (params) {
@@ -30,15 +30,16 @@ export async function serverApiRequest<T = any>(
   // Get cookies for authentication
   const cookieStore = await cookies()
   const token = cookieStore.get('token')?.value
-  
+
   const headers: Record<string, string> = {
     'Content-Type': 'application/json',
     ...(fetchOptions?.headers as Record<string, string>),
   }
-  
+
   // Add authentication token if available
   if (token) {
     headers['Cookie'] = `token=${token}`
+    headers['Authorization'] = `Bearer ${token}`
   }
 
   const response = await fetch(url, {
@@ -51,10 +52,15 @@ export async function serverApiRequest<T = any>(
     const error = await response.json().catch(() => ({
       message: `API Error: ${response.statusText}`,
     }))
-    throw new Error(error.message || `HTTP ${response.status}`)
+    throw new Error(error.message || `HTTP ${response.status} on ${endpoint}`)
   }
 
-  if (response.status === 204 || response.headers.get('content-length') === '0') {
+  // Handle empty responses (204 No Content or empty body)
+  const contentLength = response.headers.get('content-length')
+  if (response.status === 204 || contentLength === '0') {
+    if (process.env.NODE_ENV === 'development') {
+      console.log(`[API] Empty response from ${endpoint}`)
+    }
     return null as T
   }
 

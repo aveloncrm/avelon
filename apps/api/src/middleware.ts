@@ -5,9 +5,11 @@ import { NextRequest, NextResponse } from 'next/server'
 // Hardcoded allowed origins for CORS
 const ALLOWED_ORIGINS = [
    'http://localhost:8888', // Admin panel
-   'http://localhost:3000', // Storefront (if needed)
+   'http://localhost:7777', // Storefront
+   'http://localhost:3000', // Alternative storefront port
    'https://avelon-admin.vercel.app',
-   'https://admin.avelon.galamine.com'
+   'https://admin.avelon.galamine.com',
+   'https://avelon-storefront.vercel.app', // Production storefront
 ]
 
 function handleCors(req: NextRequest, response: NextResponse) {
@@ -41,7 +43,8 @@ export async function middleware(req: NextRequest) {
    const publicApiRoutes = [
       '/api/products',
       '/api/categories',
-      '/api/brands'
+      '/api/brands',
+      '/api/banners'
    ]
 
    // Check if this is a public API route (GET requests only)

@@ -36,12 +36,6 @@ export async function POST(req: Request) {
 
 export async function GET(req: Request) {
    try {
-      const userId = req.headers.get('X-USER-ID')
-
-      if (!userId) {
-         return new NextResponse('Unauthorized', { status: 401 })
-      }
-
       const bannersList = await db.query.banners.findMany({
          with: {
             categories: {

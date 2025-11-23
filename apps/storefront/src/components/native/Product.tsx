@@ -55,15 +55,20 @@ export const Product = ({ product }: { product: ProductWithIncludes }) => {
       return <h2>${product?.price}</h2>
    }
 
+   // Get the first image or use a placeholder
+   const productImage = product?.images?.[0] && product.images[0].trim() !== ''
+      ? product.images[0]
+      : '/placeholder-product.png'
+
    return (
       <Link className="" href={`/products/${product.id}`}>
          <Card className="h-full">
             <CardHeader className="p-0">
-               <div className="relative h-60 w-full">
+               <div className="relative h-60 w-full bg-neutral-100 dark:bg-neutral-800">
                   <Image
                      className="rounded-t-lg"
-                     src={product?.images[0]}
-                     alt="product image"
+                     src={productImage}
+                     alt={product?.title || 'product image'}
                      fill
                      sizes="(min-width: 1000px) 30vw, 50vw"
                      style={{ objectFit: 'cover' }}
@@ -71,9 +76,11 @@ export const Product = ({ product }: { product: ProductWithIncludes }) => {
                </div>
             </CardHeader>
             <CardContent className="grid gap-1 p-4">
-               <Badge variant="outline" className="w-min text-neutral-500">
-                  {product?.categories[0]?.title}
-               </Badge>
+               {product?.categories?.[0] && (
+                  <Badge variant="outline" className="w-min text-neutral-500">
+                     {product.categories[0].title}
+                  </Badge>
+               )}
 
                <h2 className="mt-2">{product.title}</h2>
                <p className="text-xs text-neutral-500 text-justify">
