@@ -1,14 +1,19 @@
 import db from '@/lib/db'
 import { brands, products, categories, productCategories } from '@/db/schema'
-import { eq } from 'drizzle-orm'
+import { eq, and } from 'drizzle-orm'
 import { NextResponse } from 'next/server'
 
 export async function POST(req: Request) {
    try {
       const userId = req.headers.get('X-USER-ID')
+      const storeId = req.headers.get('X-STORE-ID')
 
       if (!userId) {
          return new NextResponse('Unauthorized', { status: 401 })
+      }
+
+      if (!storeId) {
+         return new NextResponse('Store context required', { status: 400 })
       }
 
       const body = await req.json()
@@ -23,7 +28,10 @@ export async function POST(req: Request) {
          const [defaultBrand] = await db
             .select()
             .from(brands)
-            .where(eq(brands.title, 'Default Brand'))
+            .where(and(
+               eq(brands.title, 'Default Brand'),
+               eq(brands.storeId, storeId)
+            ))
             .limit(1)
 
          if (!defaultBrand) {
@@ -31,7 +39,8 @@ export async function POST(req: Request) {
                .insert(brands)
                .values({
                   title: 'Default Brand',
-                  description: 'Default brand for products without specific brand'
+                  description: 'Default brand for products without specific brand',
+                  storeId
                })
                .returning()
 
@@ -77,6 +86,7 @@ export async function POST(req: Request) {
             isFeatured,
             isAvailable,
             brandId: finalBrandId,
+            storeId,
          })
          .returning()
 
@@ -96,10 +106,17 @@ export async function POST(req: Request) {
    }
 }
 
-export async function GET() {
+export async function GET(req: Request) {
    try {
+      const storeId = req.headers.get('X-STORE-ID')
+
+      if (!storeId) {
+         return new NextResponse('Store context required', { status: 400 })
+      }
+
       // Public endpoint - no authentication required for GET
       const result = await db.query.products.findMany({
+         where: eq(products.storeId, storeId),
          with: {
             brand: true,
             categories: {

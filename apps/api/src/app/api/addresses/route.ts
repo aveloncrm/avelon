@@ -1,6 +1,6 @@
 import db from '@/lib/db'
 import { addresses } from '@/db/schema'
-import { eq } from 'drizzle-orm'
+import { eq, and } from 'drizzle-orm'
 import { NextResponse } from 'next/server'
 
 export async function GET(req: Request) {
@@ -11,10 +11,19 @@ export async function GET(req: Request) {
          return new NextResponse('Unauthorized', { status: 401 })
       }
 
+      const storeId = req.headers.get('X-STORE-ID')
+
+      if (!storeId) {
+         return new NextResponse('Store context required', { status: 400 })
+      }
+
       const addressesList = await db
          .select()
          .from(addresses)
-         .where(eq(addresses.userId, userId))
+         .where(and(
+            eq(addresses.userId, userId),
+            eq(addresses.storeId, storeId)
+         ))
 
       return NextResponse.json(addressesList)
    } catch (error) {
@@ -31,6 +40,12 @@ export async function POST(req: Request) {
          return new NextResponse('Unauthorized', { status: 401 })
       }
 
+      const storeId = req.headers.get('X-STORE-ID')
+
+      if (!storeId) {
+         return new NextResponse('Store context required', { status: 400 })
+      }
+
       const { address, city, phone, postalCode } = await req.json()
 
       const [object] = await db
@@ -41,6 +56,7 @@ export async function POST(req: Request) {
             address,
             phone,
             postalCode,
+            storeId,
          })
          .returning()
 

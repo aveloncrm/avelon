@@ -77,6 +77,7 @@ export async function POST(req: Request) {
             providerId,
             userId: paymentUserId,
             orderId,
+            storeId: order.storeId,
          })
          .returning()
 
@@ -110,6 +111,12 @@ export async function GET(req: Request) {
          return new NextResponse('Unauthorized', { status: 401 })
       }
 
+      const storeId = req.headers.get('X-STORE-ID')
+
+      if (!storeId) {
+         return new NextResponse('Store context required', { status: 400 })
+      }
+
       const { searchParams } = new URL(req.url)
       const page = parseInt(searchParams.get('page') || '1')
       const limit = parseInt(searchParams.get('limit') || '10')
@@ -122,6 +129,8 @@ export async function GET(req: Request) {
       if (status) {
          conditions.push(eq(payments.status, status as any))
       }
+
+      conditions.push(eq(payments.storeId, storeId))
       if (isSuccessful !== undefined) {
          conditions.push(eq(payments.isSuccessful, isSuccessful))
       }

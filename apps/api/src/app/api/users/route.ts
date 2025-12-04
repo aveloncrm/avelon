@@ -11,18 +11,24 @@ export async function POST(req: Request) {
          return new NextResponse('Unauthorized', { status: 401 })
       }
 
+      const storeId = req.headers.get('X-STORE-ID')
+
+      if (!storeId) {
+         return new NextResponse('Store context required', { status: 400 })
+      }
+
       const body = await req.json()
 
-      const { 
-         email, 
-         phone, 
-         name, 
-         birthday, 
-         isBanned, 
-         isEmailVerified, 
-         isPhoneVerified, 
-         isEmailSubscribed, 
-         isPhoneSubscribed 
+      const {
+         email,
+         phone,
+         name,
+         birthday,
+         isBanned,
+         isEmailVerified,
+         isPhoneVerified,
+         isEmailSubscribed,
+         isPhoneSubscribed
       } = body
 
       // Validate required fields
@@ -42,6 +48,7 @@ export async function POST(req: Request) {
             isPhoneVerified: isPhoneVerified || false,
             isEmailSubscribed: isEmailSubscribed || false,
             isPhoneSubscribed: isPhoneSubscribed || false,
+            storeId,
          })
          .returning()
 
@@ -66,11 +73,11 @@ export async function POST(req: Request) {
       return NextResponse.json(userWithRelations)
    } catch (error: any) {
       console.error('[USERS_POST]', error)
-      
+
       if (error.code === '23505') { // Unique constraint violation in PostgreSQL
          return new NextResponse('Email or phone already exists', { status: 400 })
       }
-      
+
       return new NextResponse('Internal error', { status: 500 })
    }
 }
@@ -81,6 +88,12 @@ export async function GET(req: Request) {
 
       if (!userId) {
          return new NextResponse('Unauthorized', { status: 401 })
+      }
+
+      const storeId = req.headers.get('X-STORE-ID')
+
+      if (!storeId) {
+         return new NextResponse('Store context required', { status: 400 })
       }
 
       const { searchParams } = new URL(req.url)
@@ -94,6 +107,8 @@ export async function GET(req: Request) {
       if (isBanned !== undefined) {
          conditions.push(eq(users.isBanned, isBanned))
       }
+
+      conditions.push(eq(users.storeId, storeId))
       if (search) {
          conditions.push(
             or(

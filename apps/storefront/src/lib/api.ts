@@ -14,7 +14,7 @@ export async function apiRequest<T = any>(
   options?: ApiRequestOptions
 ): Promise<T> {
   const { params, ...fetchOptions } = options || {}
-  
+
   // Build URL with query parameters if provided
   let url = `${API_URL}${endpoint}`
   if (params) {
@@ -30,6 +30,7 @@ export async function apiRequest<T = any>(
     credentials: 'include', // Important for cookies
     headers: {
       'Content-Type': 'application/json',
+      'X-STORE-ID': process.env.NEXT_PUBLIC_STORE_ID || 'default-store-001',
       ...fetchOptions?.headers,
     },
   })

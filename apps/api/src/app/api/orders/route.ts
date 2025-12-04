@@ -1,7 +1,7 @@
 import config from '@/config/site'
 import Mail from '@/emails/order_notification_owner'
 import db from '@/lib/db'
-import { orders, carts, discountCodes, owners, notifications, orderItems } from '@/db/schema'
+import { orders, carts, discountCodes, merchants, merchantNotifications, orderItems } from '@/db/schema'
 import { eq, and, gte, count, desc } from 'drizzle-orm'
 import { sendMail } from '@persepolis/mail'
 import { render } from '@react-email/render'
@@ -14,6 +14,8 @@ export async function GET(req: Request) {
       if (!userId) {
          return new NextResponse('Unauthorized', { status: 401 })
       }
+
+      const storeId = req.headers.get('X-STORE-ID')
 
       const { searchParams } = new URL(req.url)
       const page = parseInt(searchParams.get('page') || '1')
@@ -32,6 +34,11 @@ export async function GET(req: Request) {
       }
       if (isPaid !== undefined) {
          conditions.push(eq(orders.isPaid, isPaid))
+      }
+
+      // Filter by store if provided (especially for admin view)
+      if (storeId) {
+         conditions.push(eq(orders.storeId, storeId))
       }
 
       const whereClause = conditions.length > 0 ? and(...conditions) : undefined
@@ -82,6 +89,8 @@ export async function POST(req: Request) {
          return new NextResponse('Unauthorized', { status: 401 })
       }
 
+      const storeId = req.headers.get('X-STORE-ID')
+
       const body = await req.json()
       const { addressId, discountCode, adminCreate } = body
 
@@ -119,6 +128,7 @@ export async function POST(req: Request) {
                userId: orderUserId,
                addressId: addressId || null,
                discountCodeId: discountCodeId || null,
+               storeId: storeId || 'default-store-001', // Use provided storeId or fallback
             })
             .returning()
 
@@ -181,6 +191,7 @@ export async function POST(req: Request) {
             discount,
             shipping: 0,
             addressId,
+            storeId: cart.storeId, // Use storeId from cart
          })
          .returning()
 
@@ -195,20 +206,21 @@ export async function POST(req: Request) {
          })
       }
 
-      const ownersList = await db.select().from(owners)
+      const merchantsList = await db.select().from(merchants)
 
       // Create notifications
-      await db.insert(notifications).values(
-         ownersList.map((owner) => ({
-            userId: owner.id,
+      await db.insert(merchantNotifications).values(
+         merchantsList.map((merchant) => ({
+            merchantId: merchant.id,
+            storeId: order.storeId,
             content: `Order #${order.number} was created with a value of $${payable}.`,
          }))
       )
 
-      for (const owner of ownersList) {
+      for (const merchant of merchantsList) {
          await sendMail({
             name: config.name,
-            to: owner.email,
+            to: merchant.email,
             subject: 'An order was created.',
             html: await render(
                Mail({

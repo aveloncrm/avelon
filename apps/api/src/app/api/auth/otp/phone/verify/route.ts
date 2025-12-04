@@ -1,6 +1,6 @@
 import { signJWT } from '@/lib/jwt'
 import db from '@/lib/db'
-import { owners } from '@/db/schema'
+import { merchants } from '@/db/schema'
 import { eq, and } from 'drizzle-orm'
 import { getErrorResponse } from '@/lib/utils'
 import { NextRequest, NextResponse } from 'next/server'
@@ -20,19 +20,19 @@ export async function POST(req: NextRequest) {
          return getErrorResponse(500, 'Internal Server Error')
       }
 
-      const user = await db.query.owners.findFirst({
+      const merchant = await db.query.merchants.findFirst({
          where: and(
-            eq(owners.phone, phone),
-            eq(owners.OTP, OTP)
+            eq(merchants.phone, phone),
+            eq(merchants.OTP, OTP)
          ),
       })
 
-      if (!user) {
+      if (!merchant) {
          return getErrorResponse(401, 'Invalid credentials')
       }
 
       const token = await signJWT(
-         { sub: user.id },
+         { sub: merchant.id },
          { exp: `${expiryMinutes}m` }
       )
 

@@ -1,14 +1,19 @@
 import db from '@/lib/db'
 import { brands } from '@/db/schema'
-import { asc } from 'drizzle-orm'
+import { asc, eq } from 'drizzle-orm'
 import { NextResponse } from 'next/server'
 
 export async function POST(req: Request) {
    try {
       const userId = req.headers.get('X-USER-ID')
+      const storeId = req.headers.get('X-STORE-ID')
 
       if (!userId) {
          return new NextResponse('Unauthorized', { status: 401 })
+      }
+
+      if (!storeId) {
+         return new NextResponse('Store context required', { status: 400 })
       }
 
       const body = await req.json()
@@ -25,6 +30,7 @@ export async function POST(req: Request) {
             title,
             description,
             logo,
+            storeId,
          })
          .returning()
 
@@ -35,8 +41,14 @@ export async function POST(req: Request) {
    }
 }
 
-export async function GET() {
+export async function GET(req: Request) {
    try {
+      const storeId = req.headers.get('X-STORE-ID')
+
+      if (!storeId) {
+         return new NextResponse('Store context required', { status: 400 })
+      }
+
       // Public endpoint - no authentication required for GET
       const brandsList = await db
          .select({
@@ -46,6 +58,7 @@ export async function GET() {
             logo: brands.logo,
          })
          .from(brands)
+         .where(eq(brands.storeId, storeId))
          .orderBy(asc(brands.title))
 
       return NextResponse.json(brandsList)

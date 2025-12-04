@@ -33,6 +33,7 @@ export async function serverApiRequest<T = any>(
 
   const headers: Record<string, string> = {
     'Content-Type': 'application/json',
+    'X-STORE-ID': process.env.NEXT_PUBLIC_STORE_ID || 'default-store-001',
     ...(fetchOptions?.headers as Record<string, string>),
   }
 

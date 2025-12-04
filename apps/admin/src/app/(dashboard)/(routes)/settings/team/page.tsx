@@ -1,340 +1,241 @@
 'use client'
 
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
+import { Button } from '@/components/ui/button'
 import { Heading } from '@/components/ui/heading'
 import { Separator } from '@/components/ui/separator'
-import { Button } from '@/components/ui/button'
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
-import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar'
-import { Badge } from '@/components/ui/badge'
-import { Plus, Mail, Search, MoreVertical, Trash2, Edit, Shield, User, Crown } from 'lucide-react'
 import {
-    DropdownMenu,
-    DropdownMenuContent,
-    DropdownMenuItem,
-    DropdownMenuTrigger,
-} from '@/components/ui/dropdown-menu'
-import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog'
+    Card,
+    CardContent,
+    CardDescription,
+    CardHeader,
+    CardTitle,
+} from '@/components/ui/card'
+import {
+    Table,
+    TableBody,
+    TableCell,
+    TableHead,
+    TableHeader,
+    TableRow,
+} from '@/components/ui/table'
+import { Badge } from '@/components/ui/badge'
+import { UserPlus, Trash2, Mail, Crown } from 'lucide-react'
+import api from '@/lib/api'
+import { toast } from 'sonner'
 
 interface TeamMember {
     id: string
-    name: string
-    email: string
-    role: 'owner' | 'admin' | 'member' | 'viewer'
-    status: 'active' | 'invited' | 'suspended'
-    avatar?: string
-    joinedAt: string
+    role: 'owner' | 'admin' | 'member'
+    status?: 'pending' | 'accepted'
+    merchant: {
+        id: string
+        email: string
+        name: string | null
+        avatar: string | null
+    }
+    inviter?: {
+        email: string
+        name: string | null
+    }
+    createdAt: string
 }
 
-const mockTeamMembers: TeamMember[] = [
-    {
-        id: '1',
-        name: 'John Doe',
-        email: 'john@example.com',
-        role: 'owner',
-        status: 'active',
-        joinedAt: '2024-01-15',
-    },
-    {
-        id: '2',
-        name: 'Jane Smith',
-        email: 'jane@example.com',
-        role: 'admin',
-        status: 'active',
-        joinedAt: '2024-02-20',
-    },
-    {
-        id: '3',
-        name: 'Bob Johnson',
-        email: 'bob@example.com',
-        role: 'member',
-        status: 'active',
-        joinedAt: '2024-03-10',
-    },
-    {
-        id: '4',
-        name: 'Alice Williams',
-        email: 'alice@example.com',
-        role: 'member',
-        status: 'invited',
-        joinedAt: '2024-03-15',
-    },
-]
+export default function TeamPage() {
+    const [members, setMembers] = useState<TeamMember[]>([])
+    const [loading, setLoading] = useState(true)
+    const [inviting, setInviting] = useState(false)
+    const [email, setEmail] = useState('')
+    const [role, setRole] = useState<'admin' | 'member' | 'owner'>('admin')
 
-const roleIcons = {
-    owner: Crown,
-    admin: Shield,
-    member: User,
-    viewer: User,
-}
+    useEffect(() => {
+        loadTeamMembers()
+    }, [])
 
-const roleColors = {
-    owner: 'bg-purple-500',
-    admin: 'bg-blue-500',
-    member: 'bg-green-500',
-    viewer: 'bg-gray-500',
-}
+    async function loadTeamMembers() {
+        try {
+            const data = await api.get('/api/team')
+            setMembers(data)
+        } catch (error: any) {
+            console.error('Failed to load team members:', error)
+        } finally {
+            setLoading(false)
+        }
+    }
 
-export default function TeamSettingsPage() {
-    const [searchQuery, setSearchQuery] = useState('')
-    const [teamMembers] = useState<TeamMember[]>(mockTeamMembers)
-    const [isInviteDialogOpen, setIsInviteDialogOpen] = useState(false)
+    async function handleInvite(e: React.FormEvent) {
+        e.preventDefault()
 
-    const filteredMembers = teamMembers.filter(
-        (member) =>
-            member.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-            member.email.toLowerCase().includes(searchQuery.toLowerCase())
-    )
+        if (!email) return
 
-    const getInitials = (name: string) => {
-        return name
-            .split(' ')
-            .map((n) => n[0])
-            .join('')
-            .toUpperCase()
+        setInviting(true)
+        try {
+            await api.post('/api/team/invite', { email, role })
+            toast.success(role === 'owner' ? 'Ownership transfer request sent!' : 'Team member invited successfully!')
+            setEmail('')
+            setRole('admin')
+            loadTeamMembers()
+        } catch (error: any) {
+            toast.error(error.message || 'Failed to send invite')
+        } finally {
+            setInviting(false)
+        }
+    }
+
+    async function handleRemove(id: string) {
+        if (!confirm('Are you sure you want to remove this team member?')) return
+
+        try {
+            await api.delete(`/api/team?id=${id}`)
+            toast.success('Team member removed')
+            loadTeamMembers()
+        } catch (error: any) {
+            toast.error('Failed to remove team member')
+        }
     }
 
     return (
-        <div className="flex-col">
-            <div className="flex-1 space-y-4 p-8 pt-6">
-                <div className="flex items-center justify-between">
-                    <Heading
-                        title="Team Management"
-                        description="Manage your team members and their roles"
-                    />
-                    <Dialog open={isInviteDialogOpen} onOpenChange={setIsInviteDialogOpen}>
-                        <DialogTrigger asChild>
-                            <Button>
-                                <Plus className="mr-2 h-4 w-4" />
-                                Invite Member
-                            </Button>
-                        </DialogTrigger>
-                        <DialogContent>
-                            <DialogHeader>
-                                <DialogTitle>Invite Team Member</DialogTitle>
-                                <DialogDescription>
-                                    Send an invitation to add a new member to your team
-                                </DialogDescription>
-                            </DialogHeader>
-                            <div className="space-y-4 py-4">
-                                <div className="space-y-2">
-                                    <Label htmlFor="inviteEmail">Email Address</Label>
-                                    <Input id="inviteEmail" type="email" placeholder="colleague@example.com" />
+        <div className="flex-1 space-y-4 p-8 pt-6">
+            <div className="flex items-center justify-between">
+                <Heading
+                    title="Team"
+                    description="Manage team members and their access"
+                />
+            </div>
+            <Separator />
+
+            <div className="grid gap-6">
+                {/* Invite Section */}
+                <Card>
+                    <CardHeader>
+                        <div className="flex items-center gap-2">
+                            <UserPlus className="h-5 w-5" />
+                            <CardTitle>Invite Team Member</CardTitle>
+                        </div>
+                        <CardDescription>
+                            Invite someone by their email address. They must have an account.
+                        </CardDescription>
+                    </CardHeader>
+                    <CardContent>
+                        <form onSubmit={handleInvite} className="space-y-4">
+                            <div className="flex gap-4">
+                                <div className="flex-1">
+                                    <Label htmlFor="email">Email Address</Label>
+                                    <Input
+                                        id="email"
+                                        type="email"
+                                        placeholder="email@example.com"
+                                        value={email}
+                                        onChange={(e) => setEmail(e.target.value)}
+                                        required
+                                    />
                                 </div>
-                                <div className="space-y-2">
-                                    <Label htmlFor="inviteRole">Role</Label>
-                                    <Select defaultValue="member">
-                                        <SelectTrigger id="inviteRole">
-                                            <SelectValue />
-                                        </SelectTrigger>
-                                        <SelectContent>
-                                            <SelectItem value="admin">Admin</SelectItem>
-                                            <SelectItem value="member">Member</SelectItem>
-                                            <SelectItem value="viewer">Viewer</SelectItem>
-                                        </SelectContent>
-                                    </Select>
-                                </div>
-                                <div className="flex justify-end gap-2">
-                                    <Button variant="outline" onClick={() => setIsInviteDialogOpen(false)}>
-                                        Cancel
-                                    </Button>
-                                    <Button onClick={() => setIsInviteDialogOpen(false)}>Send Invitation</Button>
+                                <div className="w-40">
+                                    <Label htmlFor="role">Role</Label>
+                                    <select
+                                        id="role"
+                                        value={role}
+                                        onChange={(e) => setRole(e.target.value as 'admin' | 'member' | 'owner')}
+                                        className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+                                    >
+                                        <option value="admin">Admin</option>
+                                        <option value="member">Member</option>
+                                        <option value="owner">Owner</option>
+                                    </select>
                                 </div>
                             </div>
-                        </DialogContent>
-                    </Dialog>
-                </div>
-                <Separator />
-
-                {/* Role Permissions Overview */}
-                <div className="grid gap-4 md:grid-cols-4">
-                    <Card>
-                        <CardHeader className="pb-3">
-                            <CardTitle className="text-sm font-medium">Owner</CardTitle>
-                        </CardHeader>
-                        <CardContent>
-                            <div className="text-2xl font-bold">1</div>
-                            <p className="text-xs text-muted-foreground">Full access</p>
-                        </CardContent>
-                    </Card>
-                    <Card>
-                        <CardHeader className="pb-3">
-                            <CardTitle className="text-sm font-medium">Admin</CardTitle>
-                        </CardHeader>
-                        <CardContent>
-                            <div className="text-2xl font-bold">1</div>
-                            <p className="text-xs text-muted-foreground">Most permissions</p>
-                        </CardContent>
-                    </Card>
-                    <Card>
-                        <CardHeader className="pb-3">
-                            <CardTitle className="text-sm font-medium">Member</CardTitle>
-                        </CardHeader>
-                        <CardContent>
-                            <div className="text-2xl font-bold">2</div>
-                            <p className="text-xs text-muted-foreground">Standard access</p>
-                        </CardContent>
-                    </Card>
-                    <Card>
-                        <CardHeader className="pb-3">
-                            <CardTitle className="text-sm font-medium">Total</CardTitle>
-                        </CardHeader>
-                        <CardContent>
-                            <div className="text-2xl font-bold">{teamMembers.length}</div>
-                            <p className="text-xs text-muted-foreground">Team members</p>
-                        </CardContent>
-                    </Card>
-                </div>
+                            {role === 'owner' && (
+                                <div className="rounded-md bg-amber-50 border border-amber-200 p-3 text-sm text-amber-800">
+                                    ⚠️ <strong>Ownership Transfer:</strong> This will transfer full ownership. User must confirm via email.
+                                </div>
+                            )}
+                            <Button type="submit" disabled={inviting} className="w-full">
+                                {inviting ? 'Sending...' : role === 'owner' ? 'Send Ownership Transfer' : 'Send Invite'}
+                            </Button>
+                        </form>
+                    </CardContent>
+                </Card>
 
                 {/* Team Members List */}
                 <Card>
                     <CardHeader>
-                        <div className="flex items-center justify-between">
-                            <div>
-                                <CardTitle>Team Members</CardTitle>
-                                <CardDescription>
-                                    Manage your team and their access levels
-                                </CardDescription>
-                            </div>
-                            <div className="relative w-64">
-                                <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
-                                <Input
-                                    placeholder="Search members..."
-                                    value={searchQuery}
-                                    onChange={(e) => setSearchQuery(e.target.value)}
-                                    className="pl-9"
-                                />
-                            </div>
-                        </div>
-                    </CardHeader>
-                    <CardContent>
-                        <div className="space-y-3">
-                            {filteredMembers.map((member) => {
-                                const Icon = roleIcons[member.role]
-                                return (
-                                    <div
-                                        key={member.id}
-                                        className="flex items-center justify-between rounded-lg border p-4 hover:bg-muted/50 transition-colors"
-                                    >
-                                        <div className="flex items-center gap-4">
-                                            <Avatar>
-                                                <AvatarImage src={member.avatar} alt={member.name} />
-                                                <AvatarFallback>{getInitials(member.name)}</AvatarFallback>
-                                            </Avatar>
-                                            <div>
-                                                <div className="flex items-center gap-2">
-                                                    <p className="font-medium">{member.name}</p>
-                                                    <Icon className={`h-4 w-4 ${member.role === 'owner' ? 'text-purple-500' : 'text-gray-400'}`} />
-                                                </div>
-                                                <div className="flex items-center gap-2 text-sm text-muted-foreground">
-                                                    <Mail className="h-3 w-3" />
-                                                    {member.email}
-                                                </div>
-                                            </div>
-                                        </div>
-                                        <div className="flex items-center gap-3">
-                                            <Badge
-                                                variant="secondary"
-                                                className={`${member.status === 'active' ? 'bg-green-100 text-green-800' : ''} ${member.status === 'invited' ? 'bg-yellow-100 text-yellow-800' : ''
-                                                    }`}
-                                            >
-                                                {member.status}
-                                            </Badge>
-                                            <Badge
-                                                variant="outline"
-                                                className={`${roleColors[member.role]} text-white`}
-                                            >
-                                                {member.role.charAt(0).toUpperCase() + member.role.slice(1)}
-                                            </Badge>
-                                            {member.role !== 'owner' && (
-                                                <DropdownMenu>
-                                                    <DropdownMenuTrigger asChild>
-                                                        <Button variant="ghost" size="icon">
-                                                            <MoreVertical className="h-4 w-4" />
-                                                        </Button>
-                                                    </DropdownMenuTrigger>
-                                                    <DropdownMenuContent align="end">
-                                                        <DropdownMenuItem>
-                                                            <Edit className="mr-2 h-4 w-4" />
-                                                            Edit Role
-                                                        </DropdownMenuItem>
-                                                        <DropdownMenuItem className="text-red-600">
-                                                            <Trash2 className="mr-2 h-4 w-4" />
-                                                            Remove Member
-                                                        </DropdownMenuItem>
-                                                    </DropdownMenuContent>
-                                                </DropdownMenu>
-                                            )}
-                                        </div>
-                                    </div>
-                                )
-                            })}
-                        </div>
-                    </CardContent>
-                </Card>
-
-                {/* Role Descriptions */}
-                <Card>
-                    <CardHeader>
-                        <CardTitle>Role Permissions</CardTitle>
+                        <CardTitle>Team Members</CardTitle>
                         <CardDescription>
-                            Understand the permissions for each role
+                            {members.length} member{members.length !== 1 ? 's' : ''} in this store
                         </CardDescription>
                     </CardHeader>
                     <CardContent>
-                        <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
-                            <div className="space-y-2">
-                                <div className="flex items-center gap-2">
-                                    <Crown className="h-4 w-4 text-purple-500" />
-                                    <h4 className="font-semibold">Owner</h4>
-                                </div>
-                                <ul className="text-sm text-muted-foreground space-y-1">
-                                    <li>• All admin permissions</li>
-                                    <li>• Manage billing</li>
-                                    <li>• Delete organization</li>
-                                    <li>• Transfer ownership</li>
-                                </ul>
+                        {loading ? (
+                            <div className="text-center py-8 text-muted-foreground">
+                                Loading...
                             </div>
-                            <div className="space-y-2">
-                                <div className="flex items-center gap-2">
-                                    <Shield className="h-4 w-4 text-blue-500" />
-                                    <h4 className="font-semibold">Admin</h4>
-                                </div>
-                                <ul className="text-sm text-muted-foreground space-y-1">
-                                    <li>• All member permissions</li>
-                                    <li>• Manage team members</li>
-                                    <li>• Configure integrations</li>
-                                    <li>• Access all settings</li>
-                                </ul>
+                        ) : members.length === 0 ? (
+                            <div className="text-center py-8 text-muted-foreground">
+                                No team members yet. Invite someone to get started!
                             </div>
-                            <div className="space-y-2">
-                                <div className="flex items-center gap-2">
-                                    <User className="h-4 w-4 text-green-500" />
-                                    <h4 className="font-semibold">Member</h4>
-                                </div>
-                                <ul className="text-sm text-muted-foreground space-y-1">
-                                    <li>• Create and edit content</li>
-                                    <li>• View team data</li>
-                                    <li>• Basic integrations</li>
-                                    <li>• Limited settings access</li>
-                                </ul>
-                            </div>
-                            <div className="space-y-2">
-                                <div className="flex items-center gap-2">
-                                    <User className="h-4 w-4 text-gray-500" />
-                                    <h4 className="font-semibold">Viewer</h4>
-                                </div>
-                                <ul className="text-sm text-muted-foreground space-y-1">
-                                    <li>• Read-only access</li>
-                                    <li>• View reports</li>
-                                    <li>• Export data</li>
-                                    <li>• No modifications</li>
-                                </ul>
-                            </div>
-                        </div>
+                        ) : (
+                            <Table>
+                                <TableHeader>
+                                    <TableRow>
+                                        <TableHead>Member</TableHead>
+                                        <TableHead>Role</TableHead>
+                                        <TableHead>Status</TableHead>
+                                        <TableHead>Invited By</TableHead>
+                                        <TableHead>Joined</TableHead>
+                                        <TableHead className="text-right">Actions</TableHead>
+                                    </TableRow>
+                                </TableHeader>
+                                <TableBody>
+                                    {members.map((member) => (
+                                        <TableRow key={member.id}>
+                                            <TableCell>
+                                                <div className="flex items-center gap-2">
+                                                    <Mail className="h-4 w-4 text-muted-foreground" />
+                                                    <div>
+                                                        <div className="font-medium">
+                                                            {member.merchant.name || member.merchant.email.split('@')[0]}
+                                                        </div>
+                                                        <div className="text-sm text-muted-foreground">
+                                                            {member.merchant.email}
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                            </TableCell>
+                                            <TableCell>
+                                                <Badge variant={member.role === 'owner' ? 'default' : 'secondary'}>
+                                                    {member.role === 'owner' && <Crown className="h-3 w-3 mr-1" />}
+                                                    {member.role}
+                                                </Badge>
+                                            </TableCell>
+                                            <TableCell>
+                                                <Badge variant={member.status === 'accepted' ? 'default' : 'outline'}>
+                                                    {member.status === 'pending' ? 'Pending' : 'Active'}
+                                                </Badge>
+                                            </TableCell>
+                                            <TableCell className="text-sm text-muted-foreground">
+                                                {member.inviter?.name || member.inviter?.email || '—'}
+                                            </TableCell>
+                                            <TableCell className="text-sm text-muted-foreground">
+                                                {new Date(member.createdAt).toLocaleDateString()}
+                                            </TableCell>
+                                            <TableCell className="text-right">
+                                                {member.role !== 'owner' && (
+                                                    <Button
+                                                        variant="ghost"
+                                                        size="icon"
+                                                        onClick={() => handleRemove(member.id)}
+                                                    >
+                                                        <Trash2 className="h-4 w-4" />
+                                                    </Button>
+                                                )}
+                                            </TableCell>
+                                        </TableRow>
+                                    ))}
+                                </TableBody>
+                            </Table>
+                        )}
                     </CardContent>
                 </Card>
             </div>

@@ -12,6 +12,10 @@ import * as schema from '@/db/schema'
 export type User = InferSelectModel<typeof schema.users>
 export type NewUser = InferInsertModel<typeof schema.users>
 
+// Store Types
+export type Store = InferSelectModel<typeof schema.stores>
+export type NewStore = InferInsertModel<typeof schema.stores>
+
 // Cart Types
 export type Cart = InferSelectModel<typeof schema.carts>
 export type NewCart = InferInsertModel<typeof schema.carts>
@@ -60,9 +64,13 @@ export type NewAddress = InferInsertModel<typeof schema.addresses>
 export type Notification = InferSelectModel<typeof schema.notifications>
 export type NewNotification = InferInsertModel<typeof schema.notifications>
 
-// Owner Types
-export type Owner = InferSelectModel<typeof schema.owners>
-export type NewOwner = InferInsertModel<typeof schema.owners>
+// Merchant Types
+export type Merchant = InferSelectModel<typeof schema.merchants>
+export type NewMerchant = InferInsertModel<typeof schema.merchants>
+
+// Merchant Notification Types
+export type MerchantNotification = InferSelectModel<typeof schema.merchantNotifications>
+export type NewMerchantNotification = InferInsertModel<typeof schema.merchantNotifications>
 
 // Author Types
 export type Author = InferSelectModel<typeof schema.authors>

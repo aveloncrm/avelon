@@ -33,16 +33,109 @@ export const paymentStatusEnum = pgEnum('PaymentStatusEnum', [
   'Denied',
 ])
 
+export const subscriptionPlanEnum = pgEnum('SubscriptionPlanEnum', [
+  'free',
+  'starter',
+  'pro',
+  'enterprise',
+])
+
+export const subscriptionStatusEnum = pgEnum('SubscriptionStatusEnum', [
+  'trialing',
+  'active',
+  'past_due',
+  'canceled',
+  'unpaid',
+])
+
+export const teamMemberRoleEnum = pgEnum('TeamMemberRoleEnum', [
+  'owner',
+  'admin',
+  'member',
+])
+
+export const inviteStatusEnum = pgEnum('InviteStatusEnum', [
+  'pending',
+  'accepted',
+])
+
 // Tables
+
+// Merchants (formerly Owners) - The SaaS Users
+export const merchants = pgTable('Merchant', {
+  id: text('id').primaryKey().$defaultFn(() => crypto.randomUUID()),
+  email: text('email').notNull().unique(),
+  phone: text('phone').unique(),
+  name: text('name'),
+  avatar: text('avatar'),
+  OTP: text('OTP'),
+  createdAt: timestamp('createdAt', { mode: 'date' }).notNull().defaultNow(),
+  updatedAt: timestamp('updatedAt', { mode: 'date' }).notNull().defaultNow().$onUpdate(() => new Date()),
+})
+
+// Subscriptions - SaaS Billing
+export const subscriptions = pgTable('Subscription', {
+  id: text('id').primaryKey().$defaultFn(() => crypto.randomUUID()),
+  merchantId: text('merchantId').notNull().references(() => merchants.id).unique(),
+  plan: subscriptionPlanEnum('plan').notNull().default('free'),
+  status: subscriptionStatusEnum('status').notNull().default('active'),
+  stripeCustomerId: text('stripeCustomerId').unique(),
+  stripeSubscriptionId: text('stripeSubscriptionId').unique(),
+  currentPeriodStart: timestamp('currentPeriodStart', { mode: 'date' }),
+  currentPeriodEnd: timestamp('currentPeriodEnd', { mode: 'date' }),
+  cancelAtPeriodEnd: boolean('cancelAtPeriodEnd').notNull().default(false),
+  trialEndsAt: timestamp('trialEndsAt', { mode: 'date' }),
+  createdAt: timestamp('createdAt', { mode: 'date' }).notNull().defaultNow(),
+  updatedAt: timestamp('updatedAt', { mode: 'date' }).notNull().defaultNow().$onUpdate(() => new Date()),
+}, (table) => ({
+  merchantIdIdx: index('Subscription_merchantId_idx').on(table.merchantId),
+  stripeCustomerIdx: index('Subscription_stripeCustomerId_idx').on(table.stripeCustomerId),
+}))
+
+// Stores - The Tenants
+export const stores = pgTable('Store', {
+  id: text('id').primaryKey().$defaultFn(() => crypto.randomUUID()),
+  name: text('name').notNull(),
+  subdomain: text('subdomain').notNull().unique(), // e.g. "mystore"
+  customDomain: text('customDomain').unique(), // e.g. "mystore.com"
+  merchantId: text('merchantId').notNull().references(() => merchants.id),
+  settings: json('settings'), // Logo, colors, etc.
+  createdAt: timestamp('createdAt', { mode: 'date' }).notNull().defaultNow(),
+  updatedAt: timestamp('updatedAt', { mode: 'date' }).notNull().defaultNow().$onUpdate(() => new Date()),
+}, (table) => ({
+  merchantIdIdx: index('Store_merchantId_idx').on(table.merchantId),
+  subdomainIdx: index('Store_subdomain_idx').on(table.subdomain),
+}))
+
+// Team Members - Access control for stores
+export const teamMembers = pgTable('TeamMember', {
+  id: text('id').primaryKey().$defaultFn(() => crypto.randomUUID()),
+  storeId: text('storeId').notNull().references(() => stores.id, { onDelete: 'cascade' }),
+  merchantId: text('merchantId').notNull().references(() => merchants.id, { onDelete: 'cascade' }),
+  role: teamMemberRoleEnum('role').notNull().default('admin'),
+  status: inviteStatusEnum('status').notNull().default('pending'),
+  inviteToken: text('inviteToken').unique(),
+  invitedBy: text('invitedBy').references(() => merchants.id),
+  createdAt: timestamp('createdAt', { mode: 'date' }).notNull().defaultNow(),
+  updatedAt: timestamp('updatedAt', { mode: 'date' }).notNull().defaultNow().$onUpdate(() => new Date()),
+}, (table) => ({
+  storeIdIdx: index('TeamMember_storeId_idx').on(table.storeId),
+  merchantIdIdx: index('TeamMember_merchantId_idx').on(table.merchantId),
+  uniqueStoreUser: uniqueIndex('TeamMember_storeId_merchantId_idx').on(table.storeId, table.merchantId),
+  tokenIdx: index('TeamMember_inviteToken_idx').on(table.inviteToken),
+}))
+
+// Users (Customers) - Scoped to Store
 export const users = pgTable('User', {
   id: text('id').primaryKey().$defaultFn(() => crypto.randomUUID()),
-  email: text('email').unique(),
-  phone: text('phone').unique(),
+  storeId: text('storeId').notNull().references(() => stores.id),
+  email: text('email'), // Not unique globally, unique per store
+  phone: text('phone'),
   name: text('name'),
   birthday: text('birthday'),
   OTP: text('OTP'),
   emailUnsubscribeToken: text('emailUnsubscribeToken').unique().$defaultFn(() => crypto.randomUUID()),
-  referralCode: text('referralCode').unique(),
+  referralCode: text('referralCode'),
   isBanned: boolean('isBanned').notNull().default(false),
   isEmailVerified: boolean('isEmailVerified').notNull().default(false),
   isPhoneVerified: boolean('isPhoneVerified').notNull().default(false),
@@ -50,23 +143,35 @@ export const users = pgTable('User', {
   isPhoneSubscribed: boolean('isPhoneSubscribed').notNull().default(false),
   createdAt: timestamp('createdAt', { mode: 'date' }).notNull().defaultNow(),
   updatedAt: timestamp('updatedAt', { mode: 'date' }).notNull().defaultNow().$onUpdate(() => new Date()),
-})
+}, (table) => ({
+  storeIdIdx: index('User_storeId_idx').on(table.storeId),
+  storeEmailIdx: uniqueIndex('User_storeId_email_idx').on(table.storeId, table.email),
+  storePhoneIdx: uniqueIndex('User_storeId_phone_idx').on(table.storeId, table.phone),
+}))
 
 export const carts = pgTable('Cart', {
   userId: text('userId').primaryKey().references(() => users.id),
+  storeId: text('storeId').notNull().references(() => stores.id),
   createdAt: timestamp('createdAt', { mode: 'date' }).notNull().defaultNow(),
   updatedAt: timestamp('updatedAt', { mode: 'date' }).notNull().defaultNow().$onUpdate(() => new Date()),
-})
+}, (table) => ({
+  storeIdIdx: index('Cart_storeId_idx').on(table.storeId),
+}))
 
 export const brands = pgTable('Brand', {
   id: text('id').primaryKey().$defaultFn(() => crypto.randomUUID()),
-  title: text('title').notNull().unique(),
+  storeId: text('storeId').notNull().references(() => stores.id),
+  title: text('title').notNull(),
   description: text('description'),
   logo: text('logo'),
-})
+}, (table) => ({
+  storeIdIdx: index('Brand_storeId_idx').on(table.storeId),
+  storeTitleIdx: uniqueIndex('Brand_storeId_title_idx').on(table.storeId, table.title),
+}))
 
 export const products = pgTable('Product', {
   id: text('id').primaryKey().$defaultFn(() => crypto.randomUUID()),
+  storeId: text('storeId').notNull().references(() => stores.id),
   title: text('title').notNull(),
   description: text('description'),
   images: text('images').array().notNull().default([]),
@@ -82,16 +187,21 @@ export const products = pgTable('Product', {
   createdAt: timestamp('createdAt', { mode: 'date' }).notNull().defaultNow(),
   updatedAt: timestamp('updatedAt', { mode: 'date' }).notNull().defaultNow().$onUpdate(() => new Date()),
 }, (table) => ({
+  storeIdIdx: index('Product_storeId_idx').on(table.storeId),
   brandIdIdx: index('Product_brandId_idx').on(table.brandId),
 }))
 
 export const categories = pgTable('Category', {
   id: text('id').primaryKey().$defaultFn(() => crypto.randomUUID()),
-  title: text('title').notNull().unique(),
+  storeId: text('storeId').notNull().references(() => stores.id),
+  title: text('title').notNull(),
   description: text('description'),
   createdAt: timestamp('createdAt', { mode: 'date' }).notNull().defaultNow(),
   updatedAt: timestamp('updatedAt', { mode: 'date' }).notNull().defaultNow().$onUpdate(() => new Date()),
-})
+}, (table) => ({
+  storeIdIdx: index('Category_storeId_idx').on(table.storeId),
+  storeTitleIdx: uniqueIndex('Category_storeId_title_idx').on(table.storeId, table.title),
+}))
 
 export const productCategories = pgTable('_CategoryToProduct', {
   productId: text('A').notNull().references(() => products.id),
@@ -104,9 +214,11 @@ export const productCategories = pgTable('_CategoryToProduct', {
 export const wishlist = pgTable('_Wishlist', {
   userId: text('A').notNull().references(() => users.id),
   productId: text('B').notNull().references(() => products.id),
+  storeId: text('storeId').notNull().references(() => stores.id),
 }, (table) => ({
   pk: uniqueIndex('_Wishlist_AB_unique').on(table.userId, table.productId),
   productIdIdx: index('_Wishlist_B_index').on(table.productId),
+  storeIdIdx: index('_Wishlist_storeId_idx').on(table.storeId),
 }))
 
 export const cartItems = pgTable('CartItem', {
@@ -119,6 +231,7 @@ export const cartItems = pgTable('CartItem', {
 
 export const productReviews = pgTable('ProductReview', {
   id: text('id').primaryKey().$defaultFn(() => crypto.randomUUID()),
+  storeId: text('storeId').notNull().references(() => stores.id),
   text: text('text').notNull(),
   rating: integer('rating').notNull(),
   productId: text('productId').notNull().references(() => products.id),
@@ -129,10 +242,12 @@ export const productReviews = pgTable('ProductReview', {
   uniqueReview: uniqueIndex('UniqueProductProductReview').on(table.productId, table.userId),
   userIdIdx: index('ProductReview_userId_idx').on(table.userId),
   productIdIdx: index('ProductReview_productId_idx').on(table.productId),
+  storeIdIdx: index('ProductReview_storeId_idx').on(table.storeId),
 }))
 
 export const addresses = pgTable('Address', {
   id: text('id').primaryKey().$defaultFn(() => crypto.randomUUID()),
+  storeId: text('storeId').notNull().references(() => stores.id),
   country: text('country').notNull().default('IRI'),
   address: text('address').notNull(),
   city: text('city').notNull(),
@@ -142,11 +257,13 @@ export const addresses = pgTable('Address', {
   createdAt: timestamp('createdAt', { mode: 'date' }).notNull().defaultNow(),
 }, (table) => ({
   userIdIdx: index('Address_userId_idx').on(table.userId),
+  storeIdIdx: index('Address_storeId_idx').on(table.storeId),
 }))
 
 export const discountCodes = pgTable('DiscountCode', {
   id: text('id').primaryKey().$defaultFn(() => crypto.randomUUID()),
-  code: text('code').notNull().unique(),
+  storeId: text('storeId').notNull().references(() => stores.id),
+  code: text('code').notNull(),
   stock: integer('stock').notNull().default(1),
   description: text('description'),
   percent: integer('percent').notNull(),
@@ -154,11 +271,15 @@ export const discountCodes = pgTable('DiscountCode', {
   startDate: timestamp('startDate', { mode: 'date' }).notNull(),
   endDate: timestamp('endDate', { mode: 'date' }).notNull(),
   createdAt: timestamp('createdAt', { mode: 'date' }).notNull().defaultNow(),
-})
+}, (table) => ({
+  storeIdIdx: index('DiscountCode_storeId_idx').on(table.storeId),
+  storeCodeIdx: uniqueIndex('DiscountCode_storeId_code_idx').on(table.storeId, table.code),
+}))
 
 export const orders = pgTable('Order', {
   id: text('id').primaryKey().$defaultFn(() => crypto.randomUUID()),
-  number: serial('number').notNull().unique(),
+  storeId: text('storeId').notNull().references(() => stores.id),
+  number: serial('number').notNull(), // Global serial, could be per store but simpler global
   status: orderStatusEnum('status').notNull(),
   total: doublePrecision('total').notNull().default(100),
   shipping: doublePrecision('shipping').notNull().default(100),
@@ -176,6 +297,8 @@ export const orders = pgTable('Order', {
   userIdIdx: index('Order_userId_idx').on(table.userId),
   addressIdIdx: index('Order_addressId_idx').on(table.addressId),
   discountCodeIdIdx: index('Order_discountCodeId_idx').on(table.discountCodeId),
+  storeIdIdx: index('Order_storeId_idx').on(table.storeId),
+  storeNumberIdx: uniqueIndex('Order_storeId_number_idx').on(table.storeId, table.number),
 }))
 
 export const orderItems = pgTable('OrderItem', {
@@ -190,6 +313,7 @@ export const orderItems = pgTable('OrderItem', {
 
 export const refunds = pgTable('Refund', {
   id: text('id').primaryKey().$defaultFn(() => crypto.randomUUID()),
+  storeId: text('storeId').notNull().references(() => stores.id),
   amount: doublePrecision('amount').notNull(),
   reason: text('reason').notNull(),
   orderId: text('orderId').notNull().unique().references(() => orders.id),
@@ -197,19 +321,25 @@ export const refunds = pgTable('Refund', {
   updatedAt: timestamp('updatedAt', { mode: 'date' }).notNull().defaultNow().$onUpdate(() => new Date()),
 }, (table) => ({
   orderIdIdx: index('Refund_orderId_idx').on(table.orderId),
+  storeIdIdx: index('Refund_storeId_idx').on(table.storeId),
 }))
 
 export const paymentProviders = pgTable('PaymentProvider', {
   id: text('id').primaryKey().$defaultFn(() => crypto.randomUUID()),
-  title: text('title').notNull().unique(),
+  storeId: text('storeId').notNull().references(() => stores.id),
+  title: text('title').notNull(),
   description: text('description'),
   websiteUrl: text('websiteUrl'),
   isActive: boolean('isActive').notNull().default(false),
-})
+}, (table) => ({
+  storeIdIdx: index('PaymentProvider_storeId_idx').on(table.storeId),
+  storeTitleIdx: uniqueIndex('PaymentProvider_storeId_title_idx').on(table.storeId, table.title),
+}))
 
 export const payments = pgTable('Payment', {
   id: text('id').primaryKey().$defaultFn(() => crypto.randomUUID()),
-  number: serial('number').notNull().unique(),
+  storeId: text('storeId').notNull().references(() => stores.id),
+  number: serial('number').notNull(),
   status: paymentStatusEnum('status').notNull(),
   refId: text('refId').notNull().unique(),
   cardPan: text('cardPan'),
@@ -226,10 +356,13 @@ export const payments = pgTable('Payment', {
   userIdIdx: index('Payment_userId_idx').on(table.userId),
   providerIdIdx: index('Payment_providerId_idx').on(table.providerId),
   orderIdIdx: index('Payment_orderId_idx').on(table.orderId),
+  storeIdIdx: index('Payment_storeId_idx').on(table.storeId),
+  storeNumberIdx: uniqueIndex('Payment_storeId_number_idx').on(table.storeId, table.number),
 }))
 
 export const notifications = pgTable('Notification', {
   id: text('id').primaryKey().$defaultFn(() => crypto.randomUUID()),
+  storeId: text('storeId').notNull().references(() => stores.id),
   content: text('content').notNull(),
   isRead: boolean('isRead').notNull().default(false),
   userId: text('userId').notNull().references(() => users.id),
@@ -237,32 +370,43 @@ export const notifications = pgTable('Notification', {
   updatedAt: timestamp('updatedAt', { mode: 'date' }).notNull().defaultNow().$onUpdate(() => new Date()),
 }, (table) => ({
   userIdIdx: index('Notification_userId_idx').on(table.userId),
+  storeIdIdx: index('Notification_storeId_idx').on(table.storeId),
 }))
 
-export const owners = pgTable('Owner', {
+export const merchantNotifications = pgTable('MerchantNotification', {
   id: text('id').primaryKey().$defaultFn(() => crypto.randomUUID()),
-  email: text('email').notNull().unique(),
-  phone: text('phone').unique(),
-  name: text('name'),
-  avatar: text('avatar'),
-  OTP: text('OTP'),
+  storeId: text('storeId').notNull().references(() => stores.id),
+  content: text('content').notNull(),
+  isRead: boolean('isRead').notNull().default(false),
+  merchantId: text('merchantId').notNull().references(() => merchants.id),
   createdAt: timestamp('createdAt', { mode: 'date' }).notNull().defaultNow(),
   updatedAt: timestamp('updatedAt', { mode: 'date' }).notNull().defaultNow().$onUpdate(() => new Date()),
-})
+}, (table) => ({
+  merchantIdIdx: index('MerchantNotification_merchantId_idx').on(table.merchantId),
+  storeIdIdx: index('MerchantNotification_storeId_idx').on(table.storeId),
+}))
 
+// Authors - Scoped to Store? Or Global?
+// Assuming Authors are store-specific content creators
 export const authors = pgTable('Author', {
   id: text('id').primaryKey().$defaultFn(() => crypto.randomUUID()),
-  email: text('email').notNull().unique(),
-  phone: text('phone').unique(),
+  storeId: text('storeId').notNull().references(() => stores.id),
+  email: text('email').notNull(),
+  phone: text('phone'),
   name: text('name'),
   avatar: text('avatar'),
   OTP: text('OTP'),
   createdAt: timestamp('createdAt', { mode: 'date' }).notNull().defaultNow(),
   updatedAt: timestamp('updatedAt', { mode: 'date' }).notNull().defaultNow().$onUpdate(() => new Date()),
-})
+}, (table) => ({
+  storeIdIdx: index('Author_storeId_idx').on(table.storeId),
+  storeEmailIdx: uniqueIndex('Author_storeId_email_idx').on(table.storeId, table.email),
+}))
 
 export const blogs = pgTable('Blog', {
-  slug: text('slug').primaryKey(),
+  id: text('id').primaryKey().$defaultFn(() => crypto.randomUUID()),
+  slug: text('slug').notNull(),
+  storeId: text('storeId').notNull().references(() => stores.id),
   title: text('title').notNull(),
   image: text('image').notNull(),
   description: text('description').notNull(),
@@ -274,15 +418,20 @@ export const blogs = pgTable('Blog', {
   updatedAt: timestamp('updatedAt', { mode: 'date' }).notNull().defaultNow().$onUpdate(() => new Date()),
 }, (table) => ({
   authorIdIdx: index('Blog_authorId_idx').on(table.authorId),
+  storeIdIdx: index('Blog_storeId_idx').on(table.storeId),
+  storeSlugIdx: uniqueIndex('Blog_storeId_slug_idx').on(table.storeId, table.slug),
 }))
 
 export const banners = pgTable('Banner', {
   id: text('id').primaryKey().$defaultFn(() => crypto.randomUUID()),
+  storeId: text('storeId').notNull().references(() => stores.id),
   label: text('label').notNull(),
   image: text('image').notNull(),
   createdAt: timestamp('createdAt', { mode: 'date' }).notNull().defaultNow(),
   updatedAt: timestamp('updatedAt', { mode: 'date' }).notNull().defaultNow().$onUpdate(() => new Date()),
-})
+}, (table) => ({
+  storeIdIdx: index('Banner_storeId_idx').on(table.storeId),
+}))
 
 export const bannerCategories = pgTable('_BannerToCategory', {
   bannerId: text('A').notNull().references(() => banners.id),
@@ -294,24 +443,52 @@ export const bannerCategories = pgTable('_BannerToCategory', {
 
 export const errors = pgTable('Error', {
   id: text('id').primaryKey().$defaultFn(() => crypto.randomUUID()),
+  storeId: text('storeId').references(() => stores.id),
   error: text('error').notNull(),
   userId: text('userId').references(() => users.id),
   createdAt: timestamp('createdAt', { mode: 'date' }).notNull().defaultNow(),
 }, (table) => ({
   userIdIdx: index('Error_userId_idx').on(table.userId),
+  storeIdIdx: index('Error_storeId_idx').on(table.storeId),
 }))
 
 export const files = pgTable('File', {
   id: text('id').primaryKey().$defaultFn(() => crypto.randomUUID()),
+  storeId: text('storeId').notNull().references(() => stores.id),
   url: text('url').notNull(),
   userId: text('userId').notNull().references(() => users.id),
   createdAt: timestamp('createdAt', { mode: 'date' }).notNull().defaultNow(),
 }, (table) => ({
   userIdIdx: index('File_userId_idx').on(table.userId),
+  storeIdIdx: index('File_storeId_idx').on(table.storeId),
 }))
 
 // Relations
+export const merchantsRelations = relations(merchants, ({ many, one }) => ({
+  stores: many(stores),
+  subscription: one(subscriptions, {
+    fields: [merchants.id],
+    references: [subscriptions.merchantId],
+  }),
+}))
+
+export const storesRelations = relations(stores, ({ one, many }) => ({
+  merchant: one(merchants, {
+    fields: [stores.merchantId],
+    references: [merchants.id],
+  }),
+  users: many(users),
+  products: many(products),
+  orders: many(orders),
+  teamMembers: many(teamMembers),
+  // Add other relations as needed
+}))
+
 export const usersRelations = relations(users, ({ one, many }) => ({
+  store: one(stores, {
+    fields: [users.storeId],
+    references: [stores.id],
+  }),
   cart: one(carts, {
     fields: [users.id],
     references: [carts.userId],
@@ -331,14 +508,26 @@ export const cartsRelations = relations(carts, ({ one, many }) => ({
     fields: [carts.userId],
     references: [users.id],
   }),
+  store: one(stores, {
+    fields: [carts.storeId],
+    references: [stores.id],
+  }),
   items: many(cartItems),
 }))
 
-export const brandsRelations = relations(brands, ({ many }) => ({
+export const brandsRelations = relations(brands, ({ one, many }) => ({
+  store: one(stores, {
+    fields: [brands.storeId],
+    references: [stores.id],
+  }),
   products: many(products),
 }))
 
 export const productsRelations = relations(products, ({ one, many }) => ({
+  store: one(stores, {
+    fields: [products.storeId],
+    references: [stores.id],
+  }),
   brand: one(brands, {
     fields: [products.brandId],
     references: [brands.id],
@@ -350,7 +539,11 @@ export const productsRelations = relations(products, ({ one, many }) => ({
   productReviews: many(productReviews),
 }))
 
-export const categoriesRelations = relations(categories, ({ many }) => ({
+export const categoriesRelations = relations(categories, ({ one, many }) => ({
+  store: one(stores, {
+    fields: [categories.storeId],
+    references: [stores.id],
+  }),
   products: many(productCategories),
   banners: many(bannerCategories),
 }))
@@ -367,6 +560,10 @@ export const productCategoriesRelations = relations(productCategories, ({ one })
 }))
 
 export const wishlistRelations = relations(wishlist, ({ one }) => ({
+  store: one(stores, {
+    fields: [wishlist.storeId],
+    references: [stores.id],
+  }),
   user: one(users, {
     fields: [wishlist.userId],
     references: [users.id],
@@ -389,6 +586,10 @@ export const cartItemsRelations = relations(cartItems, ({ one }) => ({
 }))
 
 export const productReviewsRelations = relations(productReviews, ({ one }) => ({
+  store: one(stores, {
+    fields: [productReviews.storeId],
+    references: [stores.id],
+  }),
   product: one(products, {
     fields: [productReviews.productId],
     references: [products.id],
@@ -400,6 +601,10 @@ export const productReviewsRelations = relations(productReviews, ({ one }) => ({
 }))
 
 export const addressesRelations = relations(addresses, ({ one, many }) => ({
+  store: one(stores, {
+    fields: [addresses.storeId],
+    references: [stores.id],
+  }),
   user: one(users, {
     fields: [addresses.userId],
     references: [users.id],
@@ -407,11 +612,19 @@ export const addressesRelations = relations(addresses, ({ one, many }) => ({
   orders: many(orders),
 }))
 
-export const discountCodesRelations = relations(discountCodes, ({ many }) => ({
+export const discountCodesRelations = relations(discountCodes, ({ one, many }) => ({
+  store: one(stores, {
+    fields: [discountCodes.storeId],
+    references: [stores.id],
+  }),
   orders: many(orders),
 }))
 
 export const ordersRelations = relations(orders, ({ one, many }) => ({
+  store: one(stores, {
+    fields: [orders.storeId],
+    references: [stores.id],
+  }),
   user: one(users, {
     fields: [orders.userId],
     references: [users.id],
@@ -444,17 +657,29 @@ export const orderItemsRelations = relations(orderItems, ({ one }) => ({
 }))
 
 export const refundsRelations = relations(refunds, ({ one }) => ({
+  store: one(stores, {
+    fields: [refunds.storeId],
+    references: [stores.id],
+  }),
   order: one(orders, {
     fields: [refunds.orderId],
     references: [orders.id],
   }),
 }))
 
-export const paymentProvidersRelations = relations(paymentProviders, ({ many }) => ({
+export const paymentProvidersRelations = relations(paymentProviders, ({ one, many }) => ({
+  store: one(stores, {
+    fields: [paymentProviders.storeId],
+    references: [stores.id],
+  }),
   payments: many(payments),
 }))
 
 export const paymentsRelations = relations(payments, ({ one }) => ({
+  store: one(stores, {
+    fields: [payments.storeId],
+    references: [stores.id],
+  }),
   user: one(users, {
     fields: [payments.userId],
     references: [users.id],
@@ -470,24 +695,51 @@ export const paymentsRelations = relations(payments, ({ one }) => ({
 }))
 
 export const notificationsRelations = relations(notifications, ({ one }) => ({
+  store: one(stores, {
+    fields: [notifications.storeId],
+    references: [stores.id],
+  }),
   user: one(users, {
     fields: [notifications.userId],
     references: [users.id],
   }),
 }))
 
-export const authorsRelations = relations(authors, ({ many }) => ({
+export const merchantNotificationsRelations = relations(merchantNotifications, ({ one }) => ({
+  store: one(stores, {
+    fields: [merchantNotifications.storeId],
+    references: [stores.id],
+  }),
+  merchant: one(merchants, {
+    fields: [merchantNotifications.merchantId],
+    references: [merchants.id],
+  }),
+}))
+
+export const authorsRelations = relations(authors, ({ one, many }) => ({
+  store: one(stores, {
+    fields: [authors.storeId],
+    references: [stores.id],
+  }),
   blogs: many(blogs),
 }))
 
 export const blogsRelations = relations(blogs, ({ one }) => ({
+  store: one(stores, {
+    fields: [blogs.storeId],
+    references: [stores.id],
+  }),
   author: one(authors, {
     fields: [blogs.authorId],
     references: [authors.id],
   }),
 }))
 
-export const bannersRelations = relations(banners, ({ many }) => ({
+export const bannersRelations = relations(banners, ({ one, many }) => ({
+  store: one(stores, {
+    fields: [banners.storeId],
+    references: [stores.id],
+  }),
   categories: many(bannerCategories),
 }))
 
@@ -503,6 +755,10 @@ export const bannerCategoriesRelations = relations(bannerCategories, ({ one }) =
 }))
 
 export const errorsRelations = relations(errors, ({ one }) => ({
+  store: one(stores, {
+    fields: [errors.storeId],
+    references: [stores.id],
+  }),
   user: one(users, {
     fields: [errors.userId],
     references: [users.id],
@@ -510,9 +766,34 @@ export const errorsRelations = relations(errors, ({ one }) => ({
 }))
 
 export const filesRelations = relations(files, ({ one }) => ({
+  store: one(stores, {
+    fields: [files.storeId],
+    references: [stores.id],
+  }),
   user: one(users, {
     fields: [files.userId],
     references: [users.id],
   }),
 }))
 
+export const subscriptionsRelations = relations(subscriptions, ({ one }) => ({
+  merchant: one(merchants, {
+    fields: [subscriptions.merchantId],
+    references: [merchants.id],
+  }),
+}))
+
+export const teamMembersRelations = relations(teamMembers, ({ one }) => ({
+  store: one(stores, {
+    fields: [teamMembers.storeId],
+    references: [stores.id],
+  }),
+  merchant: one(merchants, {
+    fields: [teamMembers.merchantId],
+    references: [merchants.id],
+  }),
+  inviter: one(merchants, {
+    fields: [teamMembers.invitedBy],
+    references: [merchants.id],
+  }),
+}))

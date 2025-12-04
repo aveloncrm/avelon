@@ -8,6 +8,20 @@
       "when": 1761920764460,
       "tag": "0000_tricky_avengers",
       "breakpoints": true
+    },
+    {
+      "idx": 1,
+      "version": "7",
+      "when": 1763982680014,
+      "tag": "0001_fixed_martin_li",
+      "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "7",
+      "when": 1764865422325,
+      "tag": "0002_premium_silver_samurai",
+      "breakpoints": true
     }
   ]
 }

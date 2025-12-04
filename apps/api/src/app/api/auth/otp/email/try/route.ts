@@ -1,7 +1,7 @@
 import config from '@/config/site'
 import Mail from '@/emails/verify'
 import db from '@/lib/db'
-import { owners } from '@/db/schema'
+import { merchants } from '@/db/schema'
 import { eq } from 'drizzle-orm'
 import { generateSerial } from '@/lib/serial'
 import { getErrorResponse } from '@/lib/utils'
@@ -18,20 +18,20 @@ export async function POST(req: NextRequest) {
       const { email } = await req.json()
 
       if (isEmailValid(email)) {
-         // Check if owner exists
-         const existingOwner = await db.query.owners.findFirst({
-            where: eq(owners.email, email),
+         // Check if merchant exists
+         const existingMerchant = await db.query.merchants.findFirst({
+            where: eq(merchants.email, email),
          })
 
-         if (existingOwner) {
-            // Update existing owner
+         if (existingMerchant) {
+            // Update existing merchant
             await db
-               .update(owners)
+               .update(merchants)
                .set({ OTP })
-               .where(eq(owners.email, email))
+               .where(eq(merchants.email, email))
          } else {
-            // Create new owner
-            await db.insert(owners).values({
+            // Create new merchant
+            await db.insert(merchants).values({
                email,
                OTP,
             })

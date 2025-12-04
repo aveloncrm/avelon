@@ -33,7 +33,7 @@ export async function apiRequest<T = any>(
   options?: ApiRequestOptions
 ): Promise<T> {
   const { params, ...fetchOptions } = options || {}
-  
+
   // Build URL with query parameters if provided
   let url = `${API_URL}${endpoint}`
   if (params) {
@@ -46,7 +46,7 @@ export async function apiRequest<T = any>(
 
   // Get token from localStorage
   const token = tokenStorage.get()
-  
+
   const headers: HeadersInit = {
     'Content-Type': 'application/json',
     ...fetchOptions?.headers,
@@ -55,6 +55,18 @@ export async function apiRequest<T = any>(
   // Add Authorization header if token exists
   if (token) {
     headers['Authorization'] = `Bearer ${token}`
+  }
+
+  // Add Store ID header if cookie exists
+  if (typeof document !== 'undefined') {
+    const storeId = document.cookie
+      .split('; ')
+      .find(row => row.startsWith('currentStoreId='))
+      ?.split('=')[1]
+
+    if (storeId) {
+      headers['X-STORE-ID'] = storeId
+    }
   }
 
   const response = await fetch(url, {
