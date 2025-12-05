@@ -63,6 +63,7 @@ export async function POST(req: Request) {
       }
 
       const { productId, count: newCount } = await req.json()
+      const storeId = req.headers.get('X-STORE-ID') || 'default-store-001'
 
       if (newCount < 1) {
          // Delete cart item
@@ -82,7 +83,7 @@ export async function POST(req: Request) {
 
          // Create cart if it doesn't exist
          if (!existingCart) {
-            await db.insert(carts).values({ userId })
+            await db.insert(carts).values({ storeId, userId })
          }
 
          // Check if cart item exists

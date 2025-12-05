@@ -81,7 +81,6 @@ export async function POST(req: NextRequest) {
                     toName: invitedMerchant.name,
                     inviterName: inviter?.name,
                     storeName: store.name,
-                    inviteToken,
                     inviteUrl,
                 })
             } else {
@@ -91,7 +90,6 @@ export async function POST(req: NextRequest) {
                     toName: invitedMerchant.name,
                     inviterName: inviter?.name,
                     storeName: store.name,
-                    inviteToken,
                     inviteUrl,
                 })
             }
@@ -120,7 +118,6 @@ export async function POST(req: NextRequest) {
             toName: invitedMerchant.name,
             inviterName: inviter?.name,
             storeName: store.name,
-            inviteToken,
             inviteUrl,
         })
 

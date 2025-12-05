@@ -13,6 +13,7 @@ export async function POST(req: NextRequest) {
       const OTP = generateSerial({})
 
       const { phone } = await req.json()
+      const storeId = req.headers.get('X-STORE-ID') || 'default-store-001'
 
       if (isPhoneNumberValid(phone)) {
          // Check if user exists
@@ -29,6 +30,7 @@ export async function POST(req: NextRequest) {
          } else {
             // Create new user
             await db.insert(users).values({
+               storeId,
                phone,
                OTP,
             })

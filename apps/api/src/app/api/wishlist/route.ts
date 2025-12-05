@@ -37,9 +37,11 @@ export async function POST(req: Request) {
       }
 
       const { productId } = await req.json()
+      const storeId = req.headers.get('X-STORE-ID') || 'default-store-001'
 
       // Add to wishlist
       await db.insert(wishlist).values({
+         storeId,
          userId,
          productId,
       }).onConflictDoNothing()

@@ -65,12 +65,13 @@ export async function POST(req: NextRequest) {
                     })
 
                     if (existingSub) {
+                        const subData = subscription as any
                         await db.update(subscriptions)
                             .set({
                                 status: subscription.status as any,
-                                currentPeriodStart: new Date(subscription.current_period_start * 1000),
-                                currentPeriodEnd: new Date(subscription.current_period_end * 1000),
-                                cancelAtPeriodEnd: subscription.cancel_at_period_end,
+                                currentPeriodStart: new Date(subData.current_period_start * 1000),
+                                currentPeriodEnd: new Date(subData.current_period_end * 1000),
+                                cancelAtPeriodEnd: subData.cancel_at_period_end,
                             })
                             .where(eq(subscriptions.id, existingSub.id))
                     }
@@ -102,10 +103,11 @@ export async function POST(req: NextRequest) {
 
             case 'invoice.payment_failed': {
                 const invoice = event.data.object as Stripe.Invoice
+                const invoiceData = invoice as any
 
-                if (invoice.subscription) {
+                if (invoiceData.subscription) {
                     const existingSub = await db.query.subscriptions.findFirst({
-                        where: eq(subscriptions.stripeSubscriptionId, invoice.subscription as string),
+                        where: eq(subscriptions.stripeSubscriptionId, invoiceData.subscription as string),
                     })
 
                     if (existingSub) {
