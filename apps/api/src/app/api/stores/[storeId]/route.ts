@@ -6,9 +6,10 @@ import { eq, and } from 'drizzle-orm'
 // GET /api/stores/[storeId] - Get store details
 export async function GET(
     req: NextRequest,
-    { params }: { params: { storeId: string } }
+    { params }: { params: Promise<{ storeId: string }> }
 ) {
     try {
+        const { storeId } = await params
         const merchantId = req.headers.get('X-USER-ID')
 
         if (!merchantId) {
@@ -17,7 +18,7 @@ export async function GET(
 
         const store = await db.query.stores.findFirst({
             where: and(
-                eq(stores.id, params.storeId),
+                eq(stores.id, storeId),
                 eq(stores.merchantId, merchantId)
             ),
         })
@@ -36,9 +37,10 @@ export async function GET(
 // PATCH /api/stores/[storeId] - Update store
 export async function PATCH(
     req: NextRequest,
-    { params }: { params: { storeId: string } }
+    { params }: { params: Promise<{ storeId: string }> }
 ) {
     try {
+        const { storeId } = await params
         const merchantId = req.headers.get('X-USER-ID')
 
         if (!merchantId) {
@@ -48,7 +50,7 @@ export async function PATCH(
         // Verify ownership
         const existingStore = await db.query.stores.findFirst({
             where: and(
-                eq(stores.id, params.storeId),
+                eq(stores.id, storeId),
                 eq(stores.merchantId, merchantId)
             ),
         })
@@ -92,7 +94,7 @@ export async function PATCH(
                 settings: settings !== undefined ? settings : existingStore.settings,
                 updatedAt: new Date(),
             })
-            .where(eq(stores.id, params.storeId))
+            .where(eq(stores.id, storeId))
             .returning()
 
         return NextResponse.json(updatedStore)
@@ -105,9 +107,10 @@ export async function PATCH(
 // DELETE /api/stores/[storeId] - Delete store
 export async function DELETE(
     req: NextRequest,
-    { params }: { params: { storeId: string } }
+    { params }: { params: Promise<{ storeId: string }> }
 ) {
     try {
+        const { storeId } = await params
         const merchantId = req.headers.get('X-USER-ID')
 
         if (!merchantId) {
@@ -117,7 +120,7 @@ export async function DELETE(
         // Verify ownership
         const existingStore = await db.query.stores.findFirst({
             where: and(
-                eq(stores.id, params.storeId),
+                eq(stores.id, storeId),
                 eq(stores.merchantId, merchantId)
             ),
         })
@@ -127,7 +130,7 @@ export async function DELETE(
         }
 
         // Delete store (this will cascade delete related data)
-        await db.delete(stores).where(eq(stores.id, params.storeId))
+        await db.delete(stores).where(eq(stores.id, storeId))
 
         return new NextResponse(null, { status: 204 })
     } catch (error) {

@@ -6,10 +6,11 @@ import Stripe from 'stripe'
 import { headers } from 'next/headers'
 
 // POST /api/webhooks/stripe/[storeId]
-export async function POST(req: NextRequest, { params }: { params: { storeId: string } }) {
+export async function POST(req: NextRequest, { params }: { params: Promise<{ storeId: string }> }) {
     const body = await req.text()
-    const signature = headers().get('Stripe-Signature') as string
-    const { storeId } = params
+    const headersList = await headers()
+    const signature = headersList.get('Stripe-Signature') as string
+    const { storeId } = await params
 
     if (!signature || !storeId) {
         return new NextResponse('Missing signature or store ID', { status: 400 })
