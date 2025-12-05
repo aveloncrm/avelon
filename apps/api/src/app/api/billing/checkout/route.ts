@@ -28,7 +28,7 @@ export async function POST(req: NextRequest) {
         }
 
         // Get or create Stripe customer
-        let subscription = await db.query.subscriptions.findFirst({
+        const subscription = await db.query.subscriptions.findFirst({
             where: eq(subscriptions.merchantId, merchantId),
         })
 

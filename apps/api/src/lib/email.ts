@@ -16,14 +16,12 @@ export async function sendTeamInviteEmail({
   toName,
   inviterName,
   storeName,
-  inviteToken,
   inviteUrl,
 }: {
   toEmail: string
   toName?: string | null
   inviterName?: string | null
   storeName: string
-  inviteToken: string
   inviteUrl: string
 }) {
   const recipientName = toName || toEmail.split('@')[0]
@@ -124,14 +122,12 @@ export async function sendOwnershipTransferEmail({
   toName,
   inviterName,
   storeName,
-  inviteToken,
   inviteUrl,
 }: {
   toEmail: string
   toName?: string | null
   inviterName?: string | null
   storeName: string
-  inviteToken: string
   inviteUrl: string
 }) {
   const recipientName = toName || toEmail.split('@')[0]
