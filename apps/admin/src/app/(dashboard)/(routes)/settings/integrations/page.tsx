@@ -5,9 +5,8 @@ import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
-import { Separator } from '@/components/ui/separator'
 import api from '@/lib/api'
-import { Loader2, CheckCircle2, AlertCircle } from 'lucide-react'
+import { Loader2 } from 'lucide-react'
 import { toast } from 'react-hot-toast'
 
 export default function IntegrationsPage() {
@@ -51,7 +50,7 @@ export default function IntegrationsPage() {
       setIsConnected(!!stripeKeys.publishableKey && !!stripeKeys.secretKey)
       toast.success('Stripe settings saved.')
     } catch (error) {
-      toast.error('Something went wrong.')
+      toast.error(error?.message || 'Something went wrong.')
     } finally {
       setSaving(false)
     }

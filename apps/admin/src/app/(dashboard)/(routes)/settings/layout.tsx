@@ -1,42 +1,10 @@
 import { Separator } from "@/components/ui/separator"
-import { SidebarNav } from "./components/sidebar-nav"
 import { Metadata } from "next"
 
 export const metadata: Metadata = {
     title: "Settings",
     description: "Manage your account settings and set e-mail preferences.",
 }
-
-const sidebarNavItems = [
-    {
-        title: "General",
-        href: "/settings/general",
-    },
-    {
-        title: "Integrations",
-        href: "/settings/integrations",
-    },
-    {
-        title: "Team",
-        href: "/settings/team",
-    },
-    {
-        title: "Billing",
-        href: "/settings/billing",
-    },
-    {
-        title: "Notifications",
-        href: "/settings/notifications",
-    },
-    {
-        title: "Limits",
-        href: "/settings/limits",
-    },
-    {
-        title: "Ad Tracking",
-        href: "/settings/ad-tracking",
-    },
-]
 
 interface SettingsLayoutProps {
     children: React.ReactNode

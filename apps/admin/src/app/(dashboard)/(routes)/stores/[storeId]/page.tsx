@@ -1,6 +1,6 @@
 'use client'
 
-import { useEffect, useState } from 'react'
+import { useCallback, useEffect, useState } from 'react'
 import { useRouter, useParams } from 'next/navigation'
 import { Button } from '@/components/ui/button'
 import { Heading } from '@/components/ui/heading'
@@ -50,11 +50,7 @@ export default function EditStorePage() {
         customDomain: '',
     })
 
-    useEffect(() => {
-        loadStore()
-    }, [storeId])
-
-    async function loadStore() {
+    const loadStore = useCallback(async () => {
         try {
             // The api.get returns the data directly, not wrapped in a .data property
             const store: StoreData = await api.get(`/api/stores/${storeId}`)
@@ -70,7 +66,11 @@ export default function EditStorePage() {
         } finally {
             setLoading(false)
         }
-    }
+    }, [storeId, router])
+
+    useEffect(() => {
+        loadStore()
+    }, [loadStore])
 
     async function handleSubmit(e: React.FormEvent) {
         e.preventDefault()

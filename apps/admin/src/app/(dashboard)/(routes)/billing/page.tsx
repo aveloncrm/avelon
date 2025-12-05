@@ -1,7 +1,6 @@
 'use client'
 
 import { useEffect, useState } from 'react'
-import { useRouter } from 'next/navigation'
 import { Button } from '@/components/ui/button'
 import { Heading } from '@/components/ui/heading'
 import { Separator } from '@/components/ui/separator'
@@ -79,7 +78,6 @@ interface Subscription {
 }
 
 export default function BillingPage() {
-    const router = useRouter()
     const [subscription, setSubscription] = useState<Subscription | null>(null)
     const [loading, setLoading] = useState(true)
     const [upgrading, setUpgrading] = useState<string | null>(null)

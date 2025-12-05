@@ -1,6 +1,6 @@
 'use client'
 
-import { useEffect, useState } from 'react'
+import { useCallback, useEffect, useState } from 'react'
 import { useRouter } from 'next/navigation'
 import api from '@/lib/api'
 
@@ -8,11 +8,7 @@ export function OnboardingCheck({ children }: { children: React.ReactNode }) {
     const router = useRouter()
     const [checking, setChecking] = useState(true)
 
-    useEffect(() => {
-        checkOnboarding()
-    }, [])
-
-    async function checkOnboarding() {
+    const checkOnboarding = useCallback(async () => {
         try {
             // Don't run check on onboarding page itself
             if (window.location.pathname === '/onboarding') {
@@ -46,7 +42,11 @@ export function OnboardingCheck({ children }: { children: React.ReactNode }) {
             console.error('Onboarding check failed:', error)
             setChecking(false)
         }
-    }
+    }, [router])
+
+    useEffect(() => {
+        checkOnboarding()
+    }, [checkOnboarding])
 
     if (checking) {
         return (

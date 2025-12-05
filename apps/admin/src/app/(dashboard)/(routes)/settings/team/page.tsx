@@ -92,7 +92,7 @@ export default function TeamPage() {
             toast.success('Team member removed')
             loadTeamMembers()
         } catch (error: any) {
-            toast.error('Failed to remove team member')
+            toast.error(error?.message || 'Failed to remove team member')
         }
     }
 

@@ -1,6 +1,6 @@
 'use client'
 
-import { useEffect, useState } from 'react'
+import { useCallback, useEffect, useState } from 'react'
 import { useRouter, useSearchParams } from 'next/navigation'
 import { Loader2, CheckCircle2, XCircle } from 'lucide-react'
 import {
@@ -19,24 +19,13 @@ export default function AcceptInvitePage() {
 
     const [status, setStatus] = useState<'loading' | 'success' | 'error'>('loading')
     const [message, setMessage] = useState('')
-    const [storeId, setStoreId] = useState('')
 
-    useEffect(() => {
-        if (token) {
-            acceptInvite()
-        } else {
-            setStatus('error')
-            setMessage('Invalid invite link')
-        }
-    }, [token])
-
-    async function acceptInvite() {
+    const acceptInvite = useCallback(async () => {
         try {
             const response = await api.get(`/api/team/accept?token=${token}`)
 
             setStatus('success')
             setMessage(response.message || 'Invite accepted successfully!')
-            setStoreId(response.storeId)
 
             // Set the invited store as current and redirect
             setTimeout(() => {
@@ -47,7 +36,16 @@ export default function AcceptInvitePage() {
             setStatus('error')
             setMessage(error.message || 'Failed to accept invite')
         }
-    }
+    }, [token, router])
+
+    useEffect(() => {
+        if (token) {
+            acceptInvite()
+        } else {
+            setStatus('error')
+            setMessage('Invalid invite link')
+        }
+    }, [token, acceptInvite])
 
     return (
         <div className="flex min-h-screen items-center justify-center bg-gradient-to-br from-background to-muted p-4">
