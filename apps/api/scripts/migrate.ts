@@ -1,6 +1,7 @@
 import { drizzle } from 'drizzle-orm/postgres-js'
 import { migrate } from 'drizzle-orm/postgres-js/migrator'
 import postgres from 'postgres'
+import preMigrate from './pre-migrate'
 
 /**
  * Migration script for production deployment
@@ -21,23 +22,25 @@ async function runMigrations() {
   console.log('🔄 Starting database migration...')
   console.log(`📍 Target: ${databaseUrl.replace(/:[^:@]+@/, ':***@')}`) // Hide password in logs
 
-  // Create a postgres client for migrations
-  const migrationClient = postgres(databaseUrl, { max: 1 })
-  const db = drizzle(migrationClient)
-
   try {
-    // Run migrations from the drizzle folder
+    // Step 1: Run pre-migration to prepare existing data
+    await preMigrate()
+
+    // Step 2: Run Drizzle migrations
+    console.log('\n📦 Running Drizzle migrations...')
+    const migrationClient = postgres(databaseUrl, { max: 1 })
+    const db = drizzle(migrationClient)
+
     await migrate(db, { migrationsFolder: './drizzle' })
-    
+
     console.log('✅ Migrations completed successfully!')
-    
+
     // Close the connection
     await migrationClient.end()
-    
+
     process.exit(0)
   } catch (error) {
     console.error('❌ Migration failed:', error)
-    await migrationClient.end()
     process.exit(1)
   }
 }
