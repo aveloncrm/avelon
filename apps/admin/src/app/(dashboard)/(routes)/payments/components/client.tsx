@@ -18,7 +18,7 @@ export const PaymentClient: React.FC<PaymentClientProps> = ({ data }) => {
             description="Manage orders for your store"
          />
          <Separator />
-         <DataTable searchKey="products" columns={columns} data={data} />
+         <DataTable searchKey="number" columns={columns} data={data} />
       </div>
    )
 }

@@ -13,7 +13,8 @@ import {
   Tag,
   Gift,
   Settings,
-  Home
+  Home,
+  Percent
 } from 'lucide-react'
 
 export function Sidebar() {
@@ -71,8 +72,14 @@ export function Sidebar() {
     {
       href: `/codes`,
       label: 'Codes',
-      icon: Settings,
+      icon: Percent,
       active: pathname.includes(`/codes`),
+    },
+    {
+      href: `/settings`,
+      label: 'Settings',
+      icon: Settings,
+      active: pathname.includes(`/settings`),
     },
   ]
 

@@ -15,7 +15,7 @@ export default function PaymentsPage() {
       async function fetchPayments() {
          try {
             const data = await api.get('/api/payments')
-            setPayments(data)
+            setPayments(data.payments || [])
          } catch (error) {
             console.error('Error fetching payments:', error)
          } finally {
