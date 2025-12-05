@@ -7,20 +7,20 @@ import postgres from 'postgres'
  */
 
 async function preMigrate() {
-    const databaseUrl = process.env.DATABASE_URL
+  const databaseUrl = process.env.DATABASE_URL
 
-    if (!databaseUrl) {
-        throw new Error('DATABASE_URL environment variable is required')
-    }
+  if (!databaseUrl) {
+    throw new Error('DATABASE_URL environment variable is required')
+  }
 
-    console.log('🔧 Running pre-migration setup...')
-    console.log(`📍 Target: ${databaseUrl.replace(/:[^:@]+@/, ':***@')}`)
+  console.log('🔧 Running pre-migration setup...')
+  console.log(`📍 Target: ${databaseUrl.replace(/:[^:@]+@/, ':***@')}`)
 
-    const client = postgres(databaseUrl, { max: 1 })
+  const client = postgres(databaseUrl, { max: 1 })
 
-    try {
-        // Check if Merchant table exists
-        const merchantTableExists = await client`
+  try {
+    // Check if Merchant table exists
+    const merchantTableExists = await client`
       SELECT EXISTS (
         SELECT FROM information_schema.tables 
         WHERE table_schema = 'public' 
@@ -28,14 +28,14 @@ async function preMigrate() {
       ) as exists
     `
 
-        if (!merchantTableExists[0].exists) {
-            console.log('ℹ️  Merchant table does not exist yet, skipping pre-migration')
-            await client.end()
-            return
-        }
+    if (!merchantTableExists[0].exists) {
+      console.log('ℹ️  Merchant table does not exist yet, skipping pre-migration')
+      await client.end()
+      return
+    }
 
-        // Check if Store table exists
-        const storeTableExists = await client`
+    // Check if Store table exists
+    const storeTableExists = await client`
       SELECT EXISTS (
         SELECT FROM information_schema.tables 
         WHERE table_schema = 'public' 
@@ -43,15 +43,15 @@ async function preMigrate() {
       ) as exists
     `
 
-        if (!storeTableExists[0].exists) {
-            console.log('ℹ️  Store table does not exist yet, skipping pre-migration')
-            await client.end()
-            return
-        }
+    if (!storeTableExists[0].exists) {
+      console.log('ℹ️  Store table does not exist yet, skipping pre-migration')
+      await client.end()
+      return
+    }
 
-        // Create default merchant if not exists
-        console.log('📝 Creating default merchant...')
-        await client`
+    // Create default merchant if not exists
+    console.log('📝 Creating default merchant...')
+    await client`
       INSERT INTO "Merchant" (id, email, name, "createdAt", "updatedAt") 
       VALUES (
         'default-merchant-001',
@@ -63,9 +63,9 @@ async function preMigrate() {
       ON CONFLICT (id) DO NOTHING
     `
 
-        // Create default store if not exists
-        console.log('🏪 Creating default store...')
-        await client`
+    // Create default store if not exists
+    console.log('🏪 Creating default store...')
+    await client`
       INSERT INTO "Store" (id, name, subdomain, "merchantId", "createdAt", "updatedAt") 
       VALUES (
         'default-store-001',
@@ -78,33 +78,33 @@ async function preMigrate() {
       ON CONFLICT (id) DO NOTHING
     `
 
-        // Get list of tables that might need storeId updates
-        const tablesToUpdate = [
-            'Address',
-            'Author',
-            'Banner',
-            'Blog',
-            'Brand',
-            'Cart',
-            'Category',
-            'DiscountCode',
-            'File',
-            'Notification',
-            'Order',
-            'PaymentProvider',
-            'Payment',
-            'ProductReview',
-            'Product',
-            'Refund',
-            'User',
-            '_Wishlist'
-        ]
+    // Get list of tables that might need storeId updates
+    const tablesToUpdate = [
+      'Address',
+      'Author',
+      'Banner',
+      'Blog',
+      'Brand',
+      'Cart',
+      'Category',
+      'DiscountCode',
+      'File',
+      'Notification',
+      'Order',
+      'PaymentProvider',
+      'Payment',
+      'ProductReview',
+      'Product',
+      'Refund',
+      'User',
+      '_Wishlist'
+    ]
 
-        console.log('🔄 Updating existing records with default storeId...')
+    console.log('🔄 Updating existing records with default storeId...')
 
-        for (const table of tablesToUpdate) {
-            // Check if table exists
-            const tableExists = await client`
+    for (const table of tablesToUpdate) {
+      // Check if table exists
+      const tableExists = await client`
         SELECT EXISTS (
           SELECT FROM information_schema.tables 
           WHERE table_schema = 'public' 
@@ -112,13 +112,13 @@ async function preMigrate() {
         ) as exists
       `
 
-            if (!tableExists[0].exists) {
-                console.log(`   ⏭️  Skipping ${table} (table does not exist)`)
-                continue
-            }
+      if (!tableExists[0].exists) {
+        console.log(`   ⏭️  Skipping ${table} (table does not exist)`)
+        continue
+      }
 
-            // Check if storeId column exists
-            const columnExists = await client`
+      // Check if storeId column exists
+      const columnExists = await client`
         SELECT EXISTS (
           SELECT FROM information_schema.columns 
           WHERE table_schema = 'public' 
@@ -127,32 +127,42 @@ async function preMigrate() {
         ) as exists
       `
 
-            if (!columnExists[0].exists) {
-                console.log(`   ⏭️  Skipping ${table} (storeId column does not exist yet)`)
-                continue
-            }
+      if (!columnExists[0].exists) {
+        console.log(`   ⏭️  Skipping ${table} (storeId column does not exist yet)`)
+        continue
+      }
 
-            // Update NULL storeId values
-            const result = await client.unsafe(`
+      // Check if storeId has any NULL values
+      const nullCheck = await client.unsafe(`
+        SELECT COUNT(*) as count
+        FROM "${table}" 
+        WHERE "storeId" IS NULL
+      `)
+
+      const nullCount = parseInt(nullCheck[0]?.count || '0')
+
+      if (nullCount === 0) {
+        console.log(`   ℹ️  No NULL values in ${table}`)
+        continue
+      }
+
+      // Update NULL storeId values
+      const result = await client.unsafe(`
         UPDATE "${table}" 
         SET "storeId" = 'default-store-001' 
         WHERE "storeId" IS NULL
       `)
 
-            if (result.count && result.count > 0) {
-                console.log(`   ✅ Updated ${result.count} records in ${table}`)
-            } else {
-                console.log(`   ℹ️  No updates needed for ${table}`)
-            }
-        }
-
-        console.log('✅ Pre-migration completed successfully!')
-        await client.end()
-    } catch (error) {
-        console.error('❌ Pre-migration failed:', error)
-        await client.end()
-        throw error
+      console.log(`   ✅ Updated ${nullCount} NULL records in ${table}`)
     }
+
+    console.log('✅ Pre-migration completed successfully!')
+    await client.end()
+  } catch (error) {
+    console.error('❌ Pre-migration failed:', error)
+    await client.end()
+    throw error
+  }
 }
 
 export default preMigrate

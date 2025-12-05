@@ -51,26 +51,72 @@ ALTER TABLE "User" DROP CONSTRAINT "User_referralCode_unique";--> statement-brea
 */
 
 -- ALTER TABLE "Blog" DROP CONSTRAINT "<constraint_name>";--> statement-breakpoint
-ALTER TABLE "Address" ADD COLUMN "storeId" text NOT NULL;--> statement-breakpoint
-ALTER TABLE "Author" ADD COLUMN "storeId" text NOT NULL;--> statement-breakpoint
-ALTER TABLE "Banner" ADD COLUMN "storeId" text NOT NULL;--> statement-breakpoint
-ALTER TABLE "Blog" ADD COLUMN "id" text PRIMARY KEY NOT NULL;--> statement-breakpoint
-ALTER TABLE "Blog" ADD COLUMN "storeId" text NOT NULL;--> statement-breakpoint
-ALTER TABLE "Brand" ADD COLUMN "storeId" text NOT NULL;--> statement-breakpoint
-ALTER TABLE "Cart" ADD COLUMN "storeId" text NOT NULL;--> statement-breakpoint
-ALTER TABLE "Category" ADD COLUMN "storeId" text NOT NULL;--> statement-breakpoint
-ALTER TABLE "DiscountCode" ADD COLUMN "storeId" text NOT NULL;--> statement-breakpoint
-ALTER TABLE "Error" ADD COLUMN "storeId" text;--> statement-breakpoint
-ALTER TABLE "File" ADD COLUMN "storeId" text NOT NULL;--> statement-breakpoint
-ALTER TABLE "Notification" ADD COLUMN "storeId" text NOT NULL;--> statement-breakpoint
-ALTER TABLE "Order" ADD COLUMN "storeId" text NOT NULL;--> statement-breakpoint
-ALTER TABLE "PaymentProvider" ADD COLUMN "storeId" text NOT NULL;--> statement-breakpoint
-ALTER TABLE "Payment" ADD COLUMN "storeId" text NOT NULL;--> statement-breakpoint
-ALTER TABLE "ProductReview" ADD COLUMN "storeId" text NOT NULL;--> statement-breakpoint
-ALTER TABLE "Product" ADD COLUMN "storeId" text NOT NULL;--> statement-breakpoint
-ALTER TABLE "Refund" ADD COLUMN "storeId" text NOT NULL;--> statement-breakpoint
-ALTER TABLE "User" ADD COLUMN "storeId" text NOT NULL;--> statement-breakpoint
-ALTER TABLE "_Wishlist" ADD COLUMN "storeId" text NOT NULL;--> statement-breakpoint
+-- Step 1: Add storeId columns as nullable first
+ALTER TABLE "Address" ADD COLUMN "storeId" text;-->statement-breakpoint
+ALTER TABLE "Author" ADD COLUMN "storeId" text;-->statement-breakpoint
+ALTER TABLE "Banner" ADD COLUMN "storeId" text;-->statement-breakpoint
+ALTER TABLE "Blog" ADD COLUMN "id" text PRIMARY KEY NOT NULL;-->statement-breakpoint
+ALTER TABLE "Blog" ADD COLUMN "storeId" text;-->statement-breakpoint
+ALTER TABLE "Brand" ADD COLUMN "storeId" text;-->statement-breakpoint
+ALTER TABLE "Cart" ADD COLUMN "storeId" text;-->statement-breakpoint
+ALTER TABLE "Category" ADD COLUMN "storeId" text;-->statement-breakpoint
+ALTER TABLE "DiscountCode" ADD COLUMN "storeId" text;-->statement-breakpoint
+ALTER TABLE "Error" ADD COLUMN "storeId" text;-->statement-breakpoint
+ALTER TABLE "File" ADD COLUMN "storeId" text;-->statement-breakpoint
+ALTER TABLE "Notification" ADD COLUMN "storeId" text;-->statement-breakpoint
+ALTER TABLE "Order" ADD COLUMN "storeId" text;-->statement-breakpoint
+ALTER TABLE "PaymentProvider" ADD COLUMN "storeId" text;-->statement-breakpoint
+ALTER TABLE "Payment" ADD COLUMN "storeId" text;-->statement-breakpoint
+ALTER TABLE "ProductReview" ADD COLUMN "storeId" text;-->statement-breakpoint
+ALTER TABLE "Product" ADD COLUMN "storeId" text;-->statement-breakpoint
+ALTER TABLE "Refund" ADD COLUMN "storeId" text;-->statement-breakpoint
+ALTER TABLE "User" ADD COLUMN "storeId" text;-->statement-breakpoint
+ALTER TABLE "_Wishlist" ADD COLUMN "storeId" text;-->statement-breakpoint
+-- Step 1.5: Ensure default merchant and store exist
+INSERT INTO "Merchant" (id, email, name, "createdAt", "updatedAt") 
+VALUES ('default-merchant-001', 'admin@avelon.com', 'Default Merchant', NOW(), NOW())
+ON CONFLICT (id) DO NOTHING;-->statement-breakpoint
+INSERT INTO "Store" (id, name, subdomain, "merchantId", "createdAt", "updatedAt") 
+VALUES ('default-store-001', 'Default Store', 'default', 'default-merchant-001', NOW(), NOW())
+ON CONFLICT (id) DO NOTHING;-->statement-breakpoint
+-- Step 2: Update existing rows with default storeId value
+UPDATE "Address" SET "storeId" = 'default-store-001' WHERE "storeId" IS NULL;-->statement-breakpoint
+UPDATE "Author" SET "storeId" = 'default-store-001' WHERE "storeId" IS NULL;-->statement-breakpoint
+UPDATE "Banner" SET "storeId" = 'default-store-001' WHERE "storeId" IS NULL;-->statement-breakpoint
+UPDATE "Blog" SET "storeId" = 'default-store-001' WHERE "storeId" IS NULL;-->statement-breakpoint
+UPDATE "Brand" SET "storeId" = 'default-store-001' WHERE "storeId" IS NULL;-->statement-breakpoint
+UPDATE "Cart" SET "storeId" = 'default-store-001' WHERE "storeId" IS NULL;-->statement-breakpoint
+UPDATE "Category" SET "storeId" = 'default-store-001' WHERE "storeId" IS NULL;-->statement-breakpoint
+UPDATE "DiscountCode" SET "storeId" = 'default-store-001' WHERE "storeId" IS NULL;-->statement-breakpoint
+UPDATE "File" SET "storeId" = 'default-store-001' WHERE "storeId" IS NULL;-->statement-breakpoint
+UPDATE "Notification" SET "storeId" = 'default-store-001' WHERE "storeId" IS NULL;-->statement-breakpoint
+UPDATE "Order" SET "storeId" = 'default-store-001' WHERE "storeId" IS NULL;-->statement-breakpoint
+UPDATE "PaymentProvider" SET "storeId" = 'default-store-001' WHERE "storeId" IS NULL;-->statement-breakpoint
+UPDATE "Payment" SET "storeId" = 'default-store-001' WHERE "storeId" IS NULL;-->statement-breakpoint
+UPDATE "ProductReview" SET "storeId" = 'default-store-001' WHERE "storeId" IS NULL;-->statement-breakpoint
+UPDATE "Product" SET "storeId" = 'default-store-001' WHERE "storeId" IS NULL;-->statement-breakpoint
+UPDATE "Refund" SET "storeId" = 'default-store-001' WHERE "storeId" IS NULL;-->statement-breakpoint
+UPDATE "User" SET "storeId" = 'default-store-001' WHERE "storeId" IS NULL;-->statement-breakpoint
+UPDATE "_Wishlist" SET "storeId" = 'default-store-001' WHERE "storeId" IS NULL;-->statement-breakpoint
+-- Step 3: Make storeId columns NOT NULL where required
+ALTER TABLE "Address" ALTER COLUMN "storeId" SET NOT NULL;-->statement-breakpoint
+ALTER TABLE "Author" ALTER COLUMN "storeId" SET NOT NULL;-->statement-breakpoint
+ALTER TABLE "Banner" ALTER COLUMN "storeId" SET NOT NULL;-->statement-breakpoint
+ALTER TABLE "Blog" ALTER COLUMN "storeId" SET NOT NULL;-->statement-breakpoint
+ALTER TABLE "Brand" ALTER COLUMN "storeId" SET NOT NULL;-->statement-breakpoint
+ALTER TABLE "Cart" ALTER COLUMN "storeId" SET NOT NULL;-->statement-breakpoint
+ALTER TABLE "Category" ALTER COLUMN "storeId" SET NOT NULL;-->statement-breakpoint
+ALTER TABLE "DiscountCode" ALTER COLUMN "storeId" SET NOT NULL;-->statement-breakpoint
+ALTER TABLE "File" ALTER COLUMN "storeId" SET NOT NULL;-->statement-breakpoint
+ALTER TABLE "Notification" ALTER COLUMN "storeId" SET NOT NULL;-->statement-breakpoint
+ALTER TABLE "Order" ALTER COLUMN "storeId" SET NOT NULL;-->statement-breakpoint
+ALTER TABLE "PaymentProvider" ALTER COLUMN "storeId" SET NOT NULL;-->statement-breakpoint
+ALTER TABLE "Payment" ALTER COLUMN "storeId" SET NOT NULL;-->statement-breakpoint
+ALTER TABLE "ProductReview" ALTER COLUMN "storeId" SET NOT NULL;-->statement-breakpoint
+ALTER TABLE "Product" ALTER COLUMN "storeId" SET NOT NULL;-->statement-breakpoint
+ALTER TABLE "Refund" ALTER COLUMN "storeId" SET NOT NULL;-->statement-breakpoint
+ALTER TABLE "User" ALTER COLUMN "storeId" SET NOT NULL;-->statement-breakpoint
+ALTER TABLE "_Wishlist" ALTER COLUMN "storeId" SET NOT NULL;-->statement-breakpoint
 ALTER TABLE "MerchantNotification" ADD CONSTRAINT "MerchantNotification_storeId_Store_id_fk" FOREIGN KEY ("storeId") REFERENCES "public"."Store"("id") ON DELETE no action ON UPDATE no action;--> statement-breakpoint
 ALTER TABLE "MerchantNotification" ADD CONSTRAINT "MerchantNotification_merchantId_Merchant_id_fk" FOREIGN KEY ("merchantId") REFERENCES "public"."Merchant"("id") ON DELETE no action ON UPDATE no action;--> statement-breakpoint
 ALTER TABLE "Store" ADD CONSTRAINT "Store_merchantId_Merchant_id_fk" FOREIGN KEY ("merchantId") REFERENCES "public"."Merchant"("id") ON DELETE no action ON UPDATE no action;--> statement-breakpoint
