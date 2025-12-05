@@ -65,7 +65,19 @@ BEGIN
     END IF;
     -- Handle Blog table id column (might already exist with primary key)
     IF NOT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name = 'Blog' AND column_name = 'id') THEN
-        ALTER TABLE "Blog" ADD COLUMN "id" text PRIMARY KEY NOT NULL;
+        ALTER TABLE "Blog" ADD COLUMN "id" text;
+        -- Populate with random UUIDs for existing rows
+        UPDATE "Blog" SET "id" = gen_random_uuid()::text WHERE "id" IS NULL;
+        ALTER TABLE "Blog" ALTER COLUMN "id" SET NOT NULL;
+        
+        -- Only add PRIMARY KEY if one doesn't exist
+        IF NOT EXISTS (
+            SELECT 1 FROM information_schema.table_constraints 
+            WHERE table_name = 'Blog' 
+            AND constraint_type = 'PRIMARY KEY'
+        ) THEN
+            ALTER TABLE "Blog" ADD PRIMARY KEY ("id");
+        END IF;
     END IF;
     IF NOT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name = 'Blog' AND column_name = 'storeId') THEN
         ALTER TABLE "Blog" ADD COLUMN "storeId" text;
