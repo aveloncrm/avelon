@@ -51,27 +51,71 @@ ALTER TABLE "User" DROP CONSTRAINT "User_referralCode_unique";--> statement-brea
 */
 
 -- ALTER TABLE "Blog" DROP CONSTRAINT "<constraint_name>";--> statement-breakpoint
--- Step 1: Add storeId columns as nullable first
-ALTER TABLE "Address" ADD COLUMN "storeId" text;-->statement-breakpoint
-ALTER TABLE "Author" ADD COLUMN "storeId" text;-->statement-breakpoint
-ALTER TABLE "Banner" ADD COLUMN "storeId" text;-->statement-breakpoint
-ALTER TABLE "Blog" ADD COLUMN "id" text PRIMARY KEY NOT NULL;-->statement-breakpoint
-ALTER TABLE "Blog" ADD COLUMN "storeId" text;-->statement-breakpoint
-ALTER TABLE "Brand" ADD COLUMN "storeId" text;-->statement-breakpoint
-ALTER TABLE "Cart" ADD COLUMN "storeId" text;-->statement-breakpoint
-ALTER TABLE "Category" ADD COLUMN "storeId" text;-->statement-breakpoint
-ALTER TABLE "DiscountCode" ADD COLUMN "storeId" text;-->statement-breakpoint
-ALTER TABLE "Error" ADD COLUMN "storeId" text;-->statement-breakpoint
-ALTER TABLE "File" ADD COLUMN "storeId" text;-->statement-breakpoint
-ALTER TABLE "Notification" ADD COLUMN "storeId" text;-->statement-breakpoint
-ALTER TABLE "Order" ADD COLUMN "storeId" text;-->statement-breakpoint
-ALTER TABLE "PaymentProvider" ADD COLUMN "storeId" text;-->statement-breakpoint
-ALTER TABLE "Payment" ADD COLUMN "storeId" text;-->statement-breakpoint
-ALTER TABLE "ProductReview" ADD COLUMN "storeId" text;-->statement-breakpoint
-ALTER TABLE "Product" ADD COLUMN "storeId" text;-->statement-breakpoint
-ALTER TABLE "Refund" ADD COLUMN "storeId" text;-->statement-breakpoint
-ALTER TABLE "User" ADD COLUMN "storeId" text;-->statement-breakpoint
-ALTER TABLE "_Wishlist" ADD COLUMN "storeId" text;-->statement-breakpoint
+-- Step 1: Add storeId columns as nullable first (with conditional checks)
+DO $$ 
+BEGIN
+    IF NOT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name = 'Address' AND column_name = 'storeId') THEN
+        ALTER TABLE "Address" ADD COLUMN "storeId" text;
+    END IF;
+    IF NOT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name = 'Author' AND column_name = 'storeId') THEN
+        ALTER TABLE "Author" ADD COLUMN "storeId" text;
+    END IF;
+    IF NOT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name = 'Banner' AND column_name = 'storeId') THEN
+        ALTER TABLE "Banner" ADD COLUMN "storeId" text;
+    END IF;
+    -- Handle Blog table id column (might already exist with primary key)
+    IF NOT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name = 'Blog' AND column_name = 'id') THEN
+        ALTER TABLE "Blog" ADD COLUMN "id" text PRIMARY KEY NOT NULL;
+    END IF;
+    IF NOT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name = 'Blog' AND column_name = 'storeId') THEN
+        ALTER TABLE "Blog" ADD COLUMN "storeId" text;
+    END IF;
+    IF NOT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name = 'Brand' AND column_name = 'storeId') THEN
+        ALTER TABLE "Brand" ADD COLUMN "storeId" text;
+    END IF;
+    IF NOT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name = 'Cart' AND column_name = 'storeId') THEN
+        ALTER TABLE "Cart" ADD COLUMN "storeId" text;
+    END IF;
+    IF NOT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name = 'Category' AND column_name = 'storeId') THEN
+        ALTER TABLE "Category" ADD COLUMN "storeId" text;
+    END IF;
+    IF NOT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name = 'DiscountCode' AND column_name = 'storeId') THEN
+        ALTER TABLE "DiscountCode" ADD COLUMN "storeId" text;
+    END IF;
+    IF NOT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name = 'Error' AND column_name = 'storeId') THEN
+        ALTER TABLE "Error" ADD COLUMN "storeId" text;
+    END IF;
+    IF NOT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name = 'File' AND column_name = 'storeId') THEN
+        ALTER TABLE "File" ADD COLUMN "storeId" text;
+    END IF;
+    IF NOT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name = 'Notification' AND column_name = 'storeId') THEN
+        ALTER TABLE "Notification" ADD COLUMN "storeId" text;
+    END IF;
+    IF NOT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name = 'Order' AND column_name = 'storeId') THEN
+        ALTER TABLE "Order" ADD COLUMN "storeId" text;
+    END IF;
+    IF NOT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name = 'PaymentProvider' AND column_name = 'storeId') THEN
+        ALTER TABLE "PaymentProvider" ADD COLUMN "storeId" text;
+    END IF;
+    IF NOT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name = 'Payment' AND column_name = 'storeId') THEN
+        ALTER TABLE "Payment" ADD COLUMN "storeId" text;
+    END IF;
+    IF NOT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name = 'ProductReview' AND column_name = 'storeId') THEN
+        ALTER TABLE "ProductReview" ADD COLUMN "storeId" text;
+    END IF;
+    IF NOT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name = 'Product' AND column_name = 'storeId') THEN
+        ALTER TABLE "Product" ADD COLUMN "storeId" text;
+    END IF;
+    IF NOT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name = 'Refund' AND column_name = 'storeId') THEN
+        ALTER TABLE "Refund" ADD COLUMN "storeId" text;
+    END IF;
+    IF NOT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name = 'User' AND column_name = 'storeId') THEN
+        ALTER TABLE "User" ADD COLUMN "storeId" text;
+    END IF;
+    IF NOT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name = '_Wishlist' AND column_name = 'storeId') THEN
+        ALTER TABLE "_Wishlist" ADD COLUMN "storeId" text;
+    END IF;
+END $$;-->statement-breakpoint
 -- Step 1.5: Ensure default merchant and store exist
 INSERT INTO "Merchant" (id, email, name, "createdAt", "updatedAt") 
 VALUES ('default-merchant-001', 'admin@avelon.com', 'Default Merchant', NOW(), NOW())
